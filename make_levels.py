@@ -100,7 +100,7 @@ def draw_world():
                     intermediate.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 6:
                     #lava
-                    img = pygame.transform.scale(lava_img, (tile_size, tile_size // 2))
+                    img = pygame.transform.scale(shooter_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size // 2)))
                 # if world_data[row][col] == 7:
                     #coin
