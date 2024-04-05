@@ -4,30 +4,17 @@ import pickle
 from os import path
 import os
 import time
-
 pygame.init()
-page  = 0
-dirt_tile=None
-grass_tile=None
-tile_size = 50
-rows=40
-cols=20
-blob_group = pygame.sprite.Group()
-shooter_group = pygame.sprite.Group()
-bullet_group = pygame.sprite.Group()
-laser_group = pygame.sprite.Group()
 
-clock = pygame.time.Clock()
 _image_library = {}
-level=1
-screen_width=cols*tile_size
-screen_height=rows*tile_size
-screen=pygame.display.set_mode((1000,1000))
-intermediate=pygame.display.set_mode((screen_width,screen_height))
-max_down=screen_height-1050
-y_scroll=max_down
-game_over=0
-
+def get_image(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert()
+        _image_library[path] = image
+    return image
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 LIGHT_BLACK = (80, 80, 80)
@@ -47,14 +34,29 @@ LIGHT_BROWN = (196, 164, 132)
 BROWN = (111, 78, 55)
 SHADOW_BROWN = (111, 70, 40)
 
-def get_image(path):
-    global _image_library
-    image = _image_library.get(path)
-    if image == None:
-        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
-        image = pygame.image.load(canonicalized_path).convert()
-        _image_library[path] = image
-    return image
+page  = 0
+dirt_tile=None
+grass_tile=None
+tile_size = 50
+rows=40
+cols=20
+blob_group = pygame.sprite.Group()
+shooter_group = pygame.sprite.Group()
+bullet_group = pygame.sprite.Group()
+laser_group = pygame.sprite.Group()
+
+clock = pygame.time.Clock()
+level=1
+screen_width=cols*tile_size
+screen_height=rows*tile_size
+screen=pygame.display.set_mode((1000,1000))
+intermediate=pygame.surface.Surface((screen_width,screen_height))
+max_down=screen_height-1000
+y_scroll=max_down
+game_over=0
+level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
+end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+# end_bg.set_colorkey(BLACK)
 
 
 class World():
@@ -284,28 +286,25 @@ class laser(pygame.sprite.Sprite):
         self.rect.y = y
         self.move_speed= move_speed
         self.move_counter=0
-        self.bullets=pygame.sprite.Group()
+        self.least=self.rect.x+tile_size
     def update(self):
         if self.move_counter==0:
-            crash=False
-            cnt=0
-            l=world.tile_list
-            while (not crash) and cnt<=cols:
-                new=bullet(self.rect.x+cnt*tile_size,self.rect.y,self.move_dir,'dirt.png',0,tile_size,tile_size)
-                neww=bullet(self.rect.x+cnt*tile_size,self.rect.y,self.move_dir,'dirt.png',0,tile_size,tile_size)
-                for tile in l:
-                    if tile[1].colliderect(self.rect.x + cnt*tile_size, self.rect.y, tile_size, tile_size):
-                        crash=True
-                if not crash:
-                    for i in range(10):
-                        self.bullets.add(new)  
-                cnt+=1
+            least=screen_width
+            for tile in world.tile_list:
+                if abs(self.rect.y-tile[1][1])<=tile_size//2: 
+                    if self.move_dir==1:
+                        if tile[1][0]>self.rect.x:
+                            least=min(least,tile[1][0])
+                    elif (tile[1][0]<=self.rect.x):
+                        least=min(least,tile[1][0])
+            self.least=least
+        pygame.draw.rect(intermediate,RED,pygame.Rect(self.rect.x+tile_size,self.rect.y,self.least-self.rect.x-tile_size,tile_size//2))
+        intermediate.blit(end_bg,(self.least-tile_size,self.rect.y))
+                
         self.move_counter+=1
         if self.move_counter==self.move_speed:
             self.rect.y-=self.move_direction*3
-            self.bullets.empty()
             self.move_counter=0
-        self.bullets.draw(intermediate)
                 
 class App():
     def __init__(self):
@@ -353,6 +352,7 @@ class App():
                 screen.fill(BLACK)
         if page == 1 :
             screen.fill(BLACK)
+            screen.blit(level_bg,(0,0))
             if self.change:
                 for i in range (1,5) :
                     xx = f"Level {i}.png"
@@ -365,7 +365,7 @@ class App():
                         page=2   
             else:
                 self.change=True  
-                time.sleep(0.3)
+                time.sleep(0.2)
 
         if page == 0 :
             my_img = get_image('first_page.jpg')
