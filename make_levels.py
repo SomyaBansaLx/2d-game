@@ -6,6 +6,7 @@ from os import path
 
 pygame.init()
 
+main_page  = 0 
 clock = pygame.time.Clock()
 fps = 60
 y_scroll=0
@@ -28,10 +29,7 @@ bg_img = pygame.transform.scale(bg_img, (screen_width, screen_height - margin))
 dirt_img = pygame.image.load('dirt.png')
 grass_img = pygame.image.load('grass.png')
 blob_img = pygame.image.load('blob.png')
-platform_x_img = pygame.image.load('platform_x.png')
-platform_y_img = pygame.image.load('platform_y.png')
 lava_img = pygame.image.load('lava.png')
-coin_img = pygame.image.load('coin.png')
 exit_img = pygame.image.load('exit.png')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
@@ -104,10 +102,10 @@ def draw_world():
                     #lava
                     img = pygame.transform.scale(lava_img, (tile_size, tile_size // 2))
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size // 2)))
-                if world_data[row][col] == 7:
+                # if world_data[row][col] == 7:
                     #coin
-                    img = pygame.transform.scale(coin_img, (tile_size // 2, tile_size // 2))
-                    intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
+                    # img = pygame.transform.scale(coin_img, (tile_size // 2, tile_size // 2))
+                    # intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
                 if world_data[row][col] == 8:
                     #exit
                     img = pygame.transform.scale(exit_img, (tile_size, int(tile_size * 1.5)))
@@ -148,9 +146,9 @@ load_button = Button(screen_width // 2 + 50, screen_height - 80, load_img)
 #main game loop
 run = True
 while run:
-
+    
     clock.tick(fps)
-
+    
     #draw background
     screen.fill(green)
     intermediate.blit(bg_img, (0, 0))
