@@ -35,11 +35,12 @@ coin_img = pygame.image.load('coin.png')
 exit_img = pygame.image.load('exit.png')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
-
+shooter_img = pygame.image.load('shooter.png')
+shooter_left= pygame.transform.flip(shooter_img, True, False)
 
 #define game variables
 clicked = False
-level = 3
+level = 1
 
 #define colours
 white = (255, 255, 255)
@@ -93,11 +94,11 @@ def draw_world():
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size * 0.25)))
                 if world_data[row][col] == 4:
                     #horizontally moving platform
-                    img = pygame.transform.scale(platform_x_img, (tile_size, tile_size // 2))
+                    img = pygame.transform.scale(shooter_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 5:
                     #vertically moving platform
-                    img = pygame.transform.scale(platform_y_img, (tile_size, tile_size // 2))
+                    img = pygame.transform.scale(shooter_left, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 6:
                     #lava
@@ -206,6 +207,12 @@ while run:
                 level += 1
             elif event.key == pygame.K_DOWN and level > 1:
                 level -= 1
+        if event.type == MOUSEBUTTONDOWN:
+            if event.button == 4:
+                y_scroll=max(0,y_scroll-30)
+                
+            elif event.button == 5:
+                y_scroll=min(1150,30+y_scroll)
     screen.blit(intermediate,(0,-y_scroll))
     #update game display window
     pygame.display.flip()

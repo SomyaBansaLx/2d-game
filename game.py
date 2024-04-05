@@ -11,9 +11,11 @@ tile_size = 50
 rows=40
 cols=20
 blob_group = pygame.sprite.Group()
+shooter_group = pygame.sprite.Group()
+bullet_group = pygame.sprite.Group()
 clock = pygame.time.Clock()
 _image_library = {}
-level=3
+level=1
 screen_width=cols*tile_size
 screen_height=rows*tile_size
 screen=pygame.display.set_mode((1000,1000))
@@ -55,7 +57,7 @@ class World():
         global dirt_tile,grass_tile
         self.tile_list = []
         dirt_img = pygame.transform.scale(
-            get_image('dirt.png'), (tile_size, tile_size))
+            get_image('brick1.png'), (tile_size, tile_size))
         grass_img = pygame.transform.scale(
             get_image('grass.png'), (tile_size, tile_size))
         row_pos = 0
@@ -76,6 +78,20 @@ class World():
                 elif ele == 3:
                     blob = Enemy(col_pos * tile_size, row_pos * tile_size + 15)
                     blob_group.add(blob)
+                elif ele == 4:
+                    my_shooter = shooter(col_pos * tile_size, row_pos * tile_size,60,1,10)
+                    my_shooter_img_rect = my_shooter.image.get_rect()
+                    my_shooter_img_rect.x = tile_size*col_pos
+                    my_shooter_img_rect.y = tile_size*row_pos
+                    shooter_group.add(my_shooter)
+                    self.tile_list.append((my_shooter.image, my_shooter_img_rect))
+                elif ele == 5:
+                    my_shooter = shooter(col_pos * tile_size, row_pos * tile_size,40,-1,10)
+                    my_shooter_img_rect = my_shooter.image.get_rect()
+                    my_shooter_img_rect.x = tile_size*col_pos
+                    my_shooter_img_rect.y = tile_size*row_pos
+                    shooter_group.add(my_shooter)
+                    self.tile_list.append((my_shooter.image, my_shooter_img_rect))
                 col_pos += 1
             row_pos += 1
 
@@ -91,6 +107,7 @@ class character():
         self.images_l = []
         self.index = 0
         self.counter = 0
+        self.jumped = False
         for i in range(1, 5):
             img = pygame.transform.scale(get_image(f'guy{i}.png'), (40, 80))
             img.set_colorkey(BLACK)
@@ -106,18 +123,19 @@ class character():
         self.height=self.image.get_height()
         self.vel_y = 0
         self.direction_r = True
-
+    def jump(self,event):
+        if event.key==pygame.K_SPACE:
+            if not self.in_air:
+                self.vel_y = -15
+                self.in_air = True
+            elif not self.jumped:
+                self.vel_y =-15
+                self.jumped=True
     def draw_char(self, surface,world):
         walk_limit = 8
         key = pygame.key.get_pressed()
         dx = 0
         dy = 0
-        if key[pygame.K_SPACE] and not self.in_air:
-            self.vel_y = -15
-            self.in_air = True
-        elif not key[pygame.K_SPACE]:
-            self.in_air = False
-
         if key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
             dx = -5
             self.counter += 1
@@ -148,6 +166,10 @@ class character():
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
                     self.vel_y = 0
+                    self.in_air=False
+                    self.jumped=False
+        if pygame.sprite.spritecollide(self, bullet_group, False):
+            print('dead')
         self.rect.x += dx
         self.rect.y += dy
         global y_scroll
@@ -174,7 +196,58 @@ class Enemy(pygame.sprite.Sprite):
         if abs(self.move_counter) > 50:
             self.move_direction *= -1
             self.move_counter *= -1
+
+class bullet(pygame.sprite.Sprite) :
+    def __init__(self, x, y,is_right,image,move_speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image= get_image(image)
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.move_direction=is_right
+        self.rect.x = x+self.move_direction*tile_size
+        self.rect.y = y
+        self.move_speed= move_speed
+        
+    def update(self):
+        dx=self.move_direction*self.move_speed
+        for tile in world.tile_list:
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                self.kill()
+        self.rect.x+=dx 
+  
+class shooter(pygame.sprite.Sprite):
+    def __init__(self, x, y, shoot_rate,is_right,move_speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('shooter.png').convert()
+        self.image=pygame.transform.scale(self.image,(tile_size,tile_size))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.move_direction=is_right
+        self.rect.x = x
+        self.rect.y = y
+        self.shoot_counter = 0
+        self.rate=shoot_rate
+        self.move_speed= move_speed
+    def update(self):
+        self.shoot_counter += 1
+        if self.shoot_counter == self.rate:
+            self.shoot_counter=0
+            bullet_group.add(bullet(self.rect.x+int(self.move_direction*(tile_size//4)),self.rect.y,self.move_direction,'lava.png',self.move_speed))
             
+class Laser(pygame.sprite.Sprite):
+    def __init__(self, x, y,is_right,move_speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = get_image('blob.png')
+        self.image=pygame.transform.scale(self.image,(tile_size,tile_size))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.move_direction=is_right
+        self.rect.x = x
+        self.rect.y = y
+        self.move_speed= move_speed
+    def update(self):
+        self.rect.y-=self.move_speed
+        
 class Gate(pygame.sprite.Sprite):
     def __init__(self,x,y,link):
         pygame.sprite.Sprite.__init__(self)
@@ -215,6 +288,10 @@ class App():
         self.draw_grid()
         blob_group.update()
         blob_group.draw(intermediate)
+        shooter_group.update()
+        shooter_group.draw(intermediate)
+        bullet_group.update()
+        bullet_group.draw(intermediate)
         screen.blit(intermediate,(0,-y_scroll))
         pygame.display.flip()
         clock.tick(30)
@@ -225,23 +302,28 @@ class App():
             self.running = False
 
         while self.running:
+            ev=None
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                if event.type == MOUSEBUTTONDOWN:
+                elif event.type == MOUSEBUTTONDOWN:
                     if event.button == 4:
                         y_scroll=max(0,y_scroll-30)
                         
                     elif event.button == 5:
                         y_scroll=min(max_down,30+y_scroll)
+                elif event.type== pygame.KEYDOWN:
+                    if event.key== pygame.K_SPACE:
+                        self.player.jump(event)
+                
             self.on_render()
 
         pygame.quit()
 
 theApp = App()
 if path.exists(f'level{level}_data'):
-	pickle_in = open(f'level{level}_data', 'rb')
-	world_data = pickle.load(pickle_in)
+    pickle_in = open(f'level{level}_data', 'rb')
+    world_data = pickle.load(pickle_in)
 world = World(world_data)
 theApp.on_execute()
     
