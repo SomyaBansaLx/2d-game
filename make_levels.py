@@ -35,7 +35,7 @@ save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
 shooter_img = pygame.image.load('shooter.png')
 shooter_left= pygame.transform.flip(shooter_img, True, False)
-
+ninja=pygame.transform.scale(pygame.image.load('ninja/attack/1.png'),(tile_size,tile_size))
 #define game variables
 clicked = False
 level = 1
@@ -102,10 +102,9 @@ def draw_world():
                     #lava
                     img = pygame.transform.scale(shooter_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size // 2)))
-                # if world_data[row][col] == 7:
-                    #coin
-                    # img = pygame.transform.scale(coin_img, (tile_size // 2, tile_size // 2))
-                    # intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
+                if world_data[row][col] == 7:
+                    img = pygame.transform.scale(ninja, (tile_size, tile_size))
+                    intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
                 if world_data[row][col] == 8:
                     #exit
                     img = pygame.transform.scale(exit_img, (tile_size, int(tile_size * 1.5)))
@@ -210,7 +209,7 @@ while run:
                 y_scroll=max(0,y_scroll-30)
                 
             elif event.button == 5:
-                y_scroll=min(1150,30+y_scroll)
+                y_scroll=min(1200,30+y_scroll)
     screen.blit(intermediate,(0,-y_scroll))
     #update game display window
     pygame.display.flip()

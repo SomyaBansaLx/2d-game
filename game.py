@@ -44,6 +44,7 @@ blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
+ninja_group =  pygame.sprite.Group()
 
 clock = pygame.time.Clock()
 level=1
@@ -101,6 +102,8 @@ class World():
                     self.tile_list.append((my_shooter.image, my_shooter_img_rect))
                 elif ele == 6:
                     laser_group.add(laser(col_pos * tile_size, row_pos * tile_size,1,2,1))
+                elif ele == 7:
+                    ninja_group.add(Ninja(col_pos * tile_size, row_pos * tile_size))
                 col_pos += 1
             row_pos += 1
 
@@ -253,6 +256,52 @@ class bullet(pygame.sprite.Sprite) :
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, tile_size, tile_size):
                 self.kill()
         self.rect.x+=dx 
+
+class Ninja(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image_1 = pygame.image.load('ninja/NEWrun/1.png').convert()
+        self.image_1 = pygame.transform.scale(self.image_1,(100,150))
+        self.image_1.set_colorkey(BLACK)
+        self.image_2 = pygame.image.load('ninja/NEWrun/5.png').convert()
+        self.image_2 = pygame.transform.scale(self.image_2,(100,150))
+        self.image_2.set_colorkey(BLACK)
+        self.rect=self.image_1.get_rect()
+        self.rect.x = x
+        self.rect.y = y-75
+        self.move_direction = 1
+        self.move_counter = 0
+        self.index = 0
+        self.images_r = [self.image_1,self.image_2]
+        img_flip_1 = pygame.transform.flip(self.image_1, True, False)
+        img_flip_2 = pygame.transform.flip(self.image_2, True, False)
+        self.images_l = [img_flip_1,img_flip_2]
+        self.image = 0
+
+        
+
+    def update(self):
+        self.rect.x += self.move_direction
+        self.move_counter += 1
+        if abs(self.move_counter) >20 :
+            self.index = 1 - self.index
+        if abs(self.move_counter) > 50:
+            self.move_direction *= -1
+            self.move_counter *= -1
+            self.index = 0 
+        if self.move_direction == 1 : 
+            self.image = self.images_r[self.index]
+        else :
+            self.image = self.images_l[self.index]
+        intermediate.blit(self.image,self.rect)
+        
+
+    # def update_2(self,x,y):
+    #     if self.y==y :
+    #         if self.x<=x:
+
+
+
   
 class shooter(pygame.sprite.Sprite):
     def __init__(self, x, y, shoot_rate,is_right,move_speed):
@@ -347,6 +396,8 @@ class App():
                 bullet_group.draw(intermediate)
                 laser_group.update()
                 laser_group.draw(intermediate)
+                ninja_group.update()
+                ninja_group.draw(intermediate)
                 screen.blit(intermediate,(0,-y_scroll))
             elif game_over==1:
                 screen.fill(BLACK)
