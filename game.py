@@ -44,7 +44,7 @@ blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
-
+world=None
 clock = pygame.time.Clock()
 level=1
 screen_width=cols*tile_size
@@ -166,6 +166,7 @@ class character():
             elif not self.jumped:
                 self.vel_y =-15
                 self.jumped=True
+                
     def draw_char(self, surface,world):
         global game_over,page
         walk_limit = 8
@@ -227,13 +228,18 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y = y
         self.move_direction = 1
         self.move_counter = 0
+        self.attack_counter=0
+        self.in_attack=False
 
     def update(self):
-        self.rect.x += self.move_direction
-        self.move_counter += 1
-        if abs(self.move_counter) > 50:
-            self.move_direction *= -1
-            self.move_counter *= -1
+        if not self.in_attack:
+            self.rect.x += self.move_direction
+            self.move_counter += 1
+            if abs(self.move_counter) > 50:
+                self.move_direction *= -1
+                self.move_counter *= -1
+        else:
+            pass
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
@@ -318,7 +324,6 @@ class App():
 
     def on_init(self):
         self.running = True
-        self.world = world
         self.bg_img = pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
         self.bg_img.set_alpha(150)
 
@@ -336,8 +341,8 @@ class App():
             if game_over==-1 :
                 screen.fill(BLACK)
                 intermediate.blit(self.bg_img, (0, 0))
-                self.world.draw_world(intermediate)
-                self.player.draw_char(intermediate,self.world)
+                world.draw_world(intermediate)
+                self.player.draw_char(intermediate,world)
                 self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
@@ -360,9 +365,9 @@ class App():
                     level_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,xx)
                     level_btn.draw_btn()
                     if level_btn.update():
-                        print(page)
                         game_over=-1
-                        page=2   
+                        page=2 
+                        load(level)  
             else:
                 self.change=True  
                 time.sleep(0.2)
@@ -401,11 +406,12 @@ class App():
             self.on_render()
 
         pygame.quit()
-
-if path.exists(f'level{level}_data'):
-    pickle_in = open(f'level{level}_data', 'rb')
-    world_data = pickle.load(pickle_in)
-world = World(world_data)
+def load(level):
+    global world
+    if path.exists(f'level{level}_data'):
+        pickle_in = open(f'level{level}_data', 'rb')
+        world_data = pickle.load(pickle_in)
+    world = World(world_data)
 theApp = App()
 theApp.on_execute()
     
