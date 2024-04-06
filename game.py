@@ -266,48 +266,90 @@ class bullet(pygame.sprite.Sprite) :
 class Ninja(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
+
         self.image_1 = pygame.image.load('ninja/NEWrun/1.png').convert()
-        self.image_1 = pygame.transform.scale(self.image_1,(100,150))
+        self.image_1 = pygame.transform.scale(self.image_1,(150,150))
         self.image_1.set_colorkey(BLACK)
         self.image_2 = pygame.image.load('ninja/NEWrun/5.png').convert()
-        self.image_2 = pygame.transform.scale(self.image_2,(100,150))
+        self.image_2 = pygame.transform.scale(self.image_2,(150,150))
         self.image_2.set_colorkey(BLACK)
+        self.image_3 = pygame.image.load('ninja/attack/1.png').convert()
+        self.image_3 = pygame.transform.scale(self.image_3,(150,150))
+        self.image_3.set_colorkey(BLACK)
+        self.image_4 = pygame.image.load('ninja/attack/5.png').convert()
+        self.image_4 = pygame.transform.scale(self.image_4,(150,150))
+        self.image_4.set_colorkey(BLACK)
+        self.image_5 = pygame.image.load('ninja/attack/6.png').convert()
+        self.image_5 = pygame.transform.scale(self.image_5,(150,150))
+        self.image_5.set_colorkey(BLACK)
+
+
         self.rect=self.image_1.get_rect()
         self.rect.x = x
-        self.rect.y = y-75
+        self.rect.y = y-100
         self.move_direction = 1
         self.move_counter = 0
+        self.index_counter = 0 
         self.index = 0
+        self.attack_index = 0 
+
+
         self.images_r = [self.image_1,self.image_2]
+        self.images_r_attack = [self.image_3,self.image_4,self.image_5]
         img_flip_1 = pygame.transform.flip(self.image_1, True, False)
         img_flip_2 = pygame.transform.flip(self.image_2, True, False)
+        img_flip_3 = pygame.transform.flip(self.image_3, True, False)
+        img_flip_4 = pygame.transform.flip(self.image_4, True, False)
+        img_flip_5 = pygame.transform.flip(self.image_5, True, False)
         self.images_l = [img_flip_1,img_flip_2]
+        self.images_l_attack = [img_flip_3,img_flip_4,img_flip_5]
         self.image = 0
+        self.player_is_near = False
 
         
 
-    def update(self):
-        self.rect.x += self.move_direction
-        self.move_counter += 1
-        if abs(self.move_counter) >20 :
-            self.index = 1 - self.index
-        if abs(self.move_counter) > 50:
-            self.move_direction *= -1
-            self.move_counter *= -1
-            self.index = 0 
-        if self.move_direction == 1 : 
-            self.image = self.images_r[self.index]
+    def update(self,my_player):
+
+        if my_player.rect.y==self.rect.y and abs(self.rect.x-my_player.rect.x)<=200:
+            self.player_is_near = True
         else :
-            self.image = self.images_l[self.index]
-        intermediate.blit(self.image,self.rect)
-        
+            self.player_is_near = False
 
-    # def update_2(self,x,y):
-    #     if self.y==y :
-    #         if self.x<=x:
+        if self.player_is_near == False :
+            self.rect.x += 2*self.move_direction
+            self.move_counter += 1
+            self.index_counter += 1
+            if self.index_counter >10 :
+                self.index = 1 - self.index
+                self.index_counter = 0
+            if abs(self.move_counter) > 25:
+                self.move_direction *= -1
+                self.move_counter *= -1
+                self.index = 0 
+            if self.move_direction == 1 : 
+                self.image = self.images_r[self.index]
+            else :
+                self.image = self.images_l[self.index]
+            intermediate.blit(self.image,self.rect)
 
-
-
+        else :
+            
+            if self.rect.x-my_player.rect.x>0:
+                self.move_direction = 1
+            else :
+                self.move_direction = -1
+            
+            self.rect.x += self.move_direction
+            self.index_counter += 1
+            if self.index_counter >25 :
+                self.attack_index= (self.attack_index+1)%3
+                self.index_counter = 0
+            if self.move_direction == 1 : 
+                self.image = self.images_r_attack[self.attack_index]
+            else :
+                 self.image = self.images_l_attack[self.attack_index]
+            intermediate.blit(self.image,self.rect)
+             
   
 class shooter(pygame.sprite.Sprite):
     def __init__(self, x, y, shoot_rate,is_right,move_speed):
@@ -401,7 +443,7 @@ class App():
                 bullet_group.draw(intermediate)
                 laser_group.update()
                 laser_group.draw(intermediate)
-                ninja_group.update()
+                ninja_group.update(self.player)
                 ninja_group.draw(intermediate)
                 screen.blit(intermediate,(0,-y_scroll))
             elif game_over==1:
