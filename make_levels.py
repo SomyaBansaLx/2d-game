@@ -107,8 +107,8 @@ def draw_world():
                     intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
                 if world_data[row][col] == 8:
                     #exit
-                    img = pygame.transform.scale(exit_img, (tile_size, int(tile_size * 1.5)))
-                    intermediate.blit(img, (col * tile_size, row * tile_size - (tile_size // 2)))
+                    img = pygame.transform.scale(dirt_img, (tile_size, (tile_size)))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
 
 
 
