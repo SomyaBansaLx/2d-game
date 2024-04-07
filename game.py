@@ -4,6 +4,7 @@ import pickle
 from os import path
 import os
 import time
+import math
 pygame.init()
 
 _image_library = {}
@@ -46,6 +47,7 @@ bullet_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
 ninja_group =  pygame.sprite.Group()
 tile_group = pygame.sprite.Group()
+rotator_group = pygame.sprite.Group()
 lasers=[]
 world=None
 clock = pygame.time.Clock()
@@ -111,6 +113,10 @@ class World():
                     tile=tiles(col_pos * tile_size, row_pos * tile_size,img,8)
                     tile_group.add(tile)
                     self.tile_list.append((img,tile.rect))
+                elif ele == 9:
+                    img=pygame.transform.scale(get_image('zaps.png'),(2*tile_size,4*tile_size))
+                    rot=rotator(col_pos * tile_size, row_pos * tile_size,img,10)
+                    rotator_group.add(rot)
                 col_pos += 1
             row_pos += 1
 
@@ -143,7 +149,6 @@ class Btn():
         else:
             self.click=False
         return self.click
-
 start_btn = Btn(350,450,300,100,'start.jpg')        
 
 class character():
@@ -217,7 +222,8 @@ class character():
                     self.jumped=False
         if pygame.sprite.spritecollide(self, bullet_group, True):
             game_over=1
-        
+        # if pygame.sprite.spritecollide(self,rotator_group,False):
+        #     game_over=1
         self.rect.x += dx
         self.rect.y += dy
         global y_scroll
@@ -328,7 +334,38 @@ class Ninja(pygame.sprite.Sprite):
     # def update_2(self,x,y):
     #     if self.y==y :
     #         if self.x<=x:
+class rotator(pygame.sprite.Sprite):
+    def __init__(self, x, y,image,move_speed):
+        pygame.sprite.Sprite.__init__(self)
+        image.set_colorkey(BLACK)
+        self.image=image
+        self.orig=image
+        self.origr=self.image.get_rect()
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.x=x
+        self.y=y
+        self.speed=move_speed
+        self.counter=0
+        self.angle=0
+    def blitRotate(self, pos, originPos, angle):
+        image_rect = self.orig.get_rect(topleft = (pos[0], pos[1]))
+        offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
+        rotated_offset = offset_center_to_pivot.rotate(-angle)
+        rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
+        self.image = pygame.transform.rotate(self.orig, angle)
+        self.rect = self.image.get_rect(center = rotated_image_center)
 
+    #   pygame.draw.rect(surf, (255, 0, 0), (*rotated_image_rect.topleft, *rotated_image.get_size()),2)
+    def update(self):
+        self.counter+=1
+        if self.counter==self.speed:
+            self.counter=0
+            self.angle=(self.angle+3)%360
+        self.blitRotate((self.x,self.y),(self.x,self.y),self.angle)
+        
+        
 class tiles(pygame.sprite.Sprite):
     def __init__(self, x, y,image,time):
         pygame.sprite.Sprite.__init__(self)
@@ -405,7 +442,7 @@ class laser(pygame.sprite.Sprite):
         if self.move_counter==self.move_speed:
             self.rect.y-=self.move_direction*3
             self.move_counter=0
-                
+                          
 class App():
     def __init__(self):
         self.running = True
@@ -425,6 +462,13 @@ class App():
         for i in range(rows):
             pygame.draw.line(intermediate, WHITE, (
                 0, 0+i*tile_size), (screen_width, 0+i*tile_size))
+    def draw_rect_angle(self,rect, pivot, angle):
+        pts = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]
+        pts = [(pygame.math.Vector2(p) - pivot).rotate(-angle) + pivot for p in pts]
+        for i in range(4):
+            if self.player.rect.clipline(pts[i],pts[(i+1)%4]):
+                return True
+        return False
     def on_render(self):
         global page,game_over
         if page == 3 :
@@ -446,8 +490,13 @@ class App():
                 ninja_group.update(self.player)
                 ninja_group.draw(intermediate)
                 tile_group.draw(intermediate)
+                rotator_group.draw(intermediate)
+                rotator_group.update()
                 for tile in tile_group.sprites():
                     tile.draww()
+                for rot in rotator_group.sprites():
+                    if self.draw_rect_angle(pygame.Rect(rot.x,rot.y,100,200),(rot.x,rot.y),rot.angle):
+                        game_over=1
                 screen.blit(intermediate,(0,-y_scroll))
             elif game_over==1:
                 screen.fill(BLACK)
@@ -466,8 +515,7 @@ class App():
                         game_over=-1
                         page=3 
                         lst = os.listdir(xx) # your directory path
-                        num = len(lst)
-                        print(num)
+                        num = len(lst)-1
                         self.player = character(50, screen_height-200,xx,num)
                         load(level) 
                         self.change=False 
@@ -508,7 +556,8 @@ class App():
         bullet_group.empty()
         ninja_group.empty()
         laser_group.empty()
-        
+        tile_group.empty()
+        rotator_group.empty()
     def on_execute(self):
         global y_scroll
         if self.on_init() == False:
