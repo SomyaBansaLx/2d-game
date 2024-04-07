@@ -367,7 +367,7 @@ class shooter(pygame.sprite.Sprite):
         self.shoot_counter += 1
         if self.shoot_counter == self.rate:
             self.shoot_counter=0
-            bullet_group.add(bullet(self.rect.x+int(self.move_direction*(tile_size//4)),self.rect.y,self.move_direction,'lava.png',self.move_speed,tile_size//2,tile_size//2))
+            bullet_group.add(bullet(self.rect.x,self.rect.y,self.move_direction,'lava.png',self.move_speed,tile_size//2,tile_size//2))
             
 class laser(pygame.sprite.Sprite):
     def __init__(self, x, y,is_right,move_speed,is_up):
