@@ -281,6 +281,7 @@ class Ninja(pygame.sprite.Sprite):
         self.rect.y = y-(tile_size-10)
         self.move_direction = 1
         self.move_counter = 0
+        self.index_counter = 0 
         self.index = 0
         self.images_r=[]
         self.images_l=[]
@@ -441,6 +442,7 @@ class App():
                 bullet_group.draw(intermediate)
                 laser_group.update(self.player)
                 laser_group.draw(intermediate)
+                ninja_group.update(self.player)
                 ninja_group.update(self.player)
                 ninja_group.draw(intermediate)
                 tile_group.draw(intermediate)
