@@ -13,13 +13,13 @@ y_scroll=0
 #game window
 tile_size = 50
 cols = 20
-rows=40
+rows=60
 margin = 200
 screen_width = tile_size * cols
 screen_height = (tile_size * rows) + margin
 
 screen = pygame.display.set_mode((1000, 1000))
-intermediate=pygame.display.set_mode((1000,2200))
+intermediate=pygame.display.set_mode((screen_width,screen_height))
 pygame.display.set_caption('Level Editor')
 
 
@@ -36,6 +36,7 @@ shooter_img = pygame.image.load('shooter.png')
 shooter_left= pygame.transform.flip(shooter_img, True, False)
 ninja=pygame.transform.scale(pygame.image.load('ninja/attack/1.png'),(tile_size,tile_size))
 zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile_size))
+gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size,tile_size))
 #define game variables
 clicked = False
 level = 1
@@ -107,7 +108,7 @@ def draw_world():
                     intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
                 if world_data[row][col] == 8:
                     #exit
-                    img = pygame.transform.scale(dirt_img, (tile_size, (tile_size)))
+                    img = pygame.transform.scale(gayab_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
                 if world_data[row][col] == 9:
                     #exit
@@ -213,7 +214,7 @@ while run:
                 y_scroll=max(0,y_scroll-30)
                 
             elif event.button == 5:
-                y_scroll=min(1200,30+y_scroll)
+                y_scroll=min(rows*tile_size-800,30+y_scroll)
     screen.blit(intermediate,(0,-y_scroll))
     #update game display window
     pygame.display.flip()

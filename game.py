@@ -61,12 +61,25 @@ y_scroll=max_down
 game_over=0
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
 # end_bg.set_colorkey(BLACK)
-
+def load_new(row):
+    global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg
+    rows=row
+    screen_height=tile_size*row
+    intermediate=pygame.surface.Surface((screen_width,screen_height))
+    max_down=screen_height-1000
+    y_scroll=max_down
+    level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
+    bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
+    
+level_data=[{"rows":40},{"rows":40},{"rows":60},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":60}]
 
 class World():
     def __init__(self, data):
         global dirt_tile,grass_tile
+        load_new(level_data[level-1]["rows"])
+        tile_num=0
         self.tile_list = []
         dirt_img = pygame.transform.scale(
             get_image('brown_wood.png'), (tile_size, tile_size))
@@ -105,12 +118,13 @@ class World():
                     shooter_group.add(my_shooter)
                     self.tile_list.append((my_shooter.image, my_shooter_img_rect))
                 elif ele == 6:
-                    laser_group.add(laser(col_pos * tile_size, row_pos * tile_size,1,2,1))
+                    laser_group.add(laser(col_pos * tile_size, row_pos * tile_size,1,4,1))
                 elif ele == 7:
                     ninja_group.add(Ninja(col_pos * tile_size, row_pos * tile_size))
                 elif ele == 8:
                     img=pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
-                    tile=tiles(col_pos * tile_size, row_pos * tile_size,img,8)
+                    tile=tiles(col_pos * tile_size, row_pos * tile_size,img,level_data[level-1]["tiles"][tile_num])
+                    tile_num+=1
                     tile_group.add(tile)
                     self.tile_list.append((img,tile.rect))
                 elif ele == 9:
@@ -176,10 +190,10 @@ class character():
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
-                self.vel_y = -15
+                self.vel_y = -19
                 self.in_air = True
             elif not self.jumped:
-                self.vel_y =-15
+                self.vel_y =-17
                 self.jumped=True
                 
     def draw_char(self, surface,world):
@@ -451,9 +465,7 @@ class App():
         self.change=False
         self.folder=""
     def on_init(self):
-        self.running = True
-        self.bg_img = pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
-        self.bg_img.set_alpha(150)
+        self.running = True 
 
     def draw_grid(self):
         for i in range(cols):
@@ -470,11 +482,11 @@ class App():
                 return True
         return False
     def on_render(self):
-        global page,game_over
+        global page,game_over,level
         if page == 3 :
             if game_over==-1 :
                 screen.fill(BLACK)
-                intermediate.blit(self.bg_img, (0, 0))
+                intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
                 # self.draw_grid()
@@ -516,8 +528,8 @@ class App():
                         page=3 
                         lst = os.listdir(xx) # your directory path
                         num = len(lst)-1
-                        self.player = character(50, screen_height-200,xx,num)
-                        load(level) 
+                        load(level)
+                        self.player = character(50, screen_height-200,xx,num) 
                         self.change=False 
             else:
                 self.change=True  
@@ -532,6 +544,7 @@ class App():
                     level_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,xx)
                     level_btn.draw_btn()
                     if level_btn.update():
+                        level=i
                         page=2 
                         self.change=False 
             else:
