@@ -59,27 +59,33 @@ screen=pygame.display.set_mode((1000,1000))
 intermediate=pygame.surface.Surface((screen_width,screen_height))
 max_down=screen_height-1000
 y_scroll=max_down
+max_right=screen_width-1000
+x_scroll=max_right
 game_over=0
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
 # end_bg.set_colorkey(BLACK)
-def load_new(row):
-    global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg
+def load_new(row,col):
+    global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
     rows=row
+    cols=col
     screen_height=tile_size*row
+    screen_width=tile_size*col
     intermediate=pygame.surface.Surface((screen_width,screen_height))
     max_down=screen_height-1000
+    max_right=screen_width-1000
     y_scroll=max_down
+    x_scroll= 0
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40},{"rows":40},{"rows":60},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40}]
+level_data=[{"rows":40,"cols":40},{"rows":40,'cols':20},{"rows":60,'cols':20},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20}]
 
 class World():
     def __init__(self, data):
         global dirt_tile,grass_tile
-        load_new(level_data[level-1]["rows"])
+        load_new(level_data[level-1]["rows"],level_data[level-1]['cols'])
         tile_num=0
         self.tile_list = []
         dirt_img = pygame.transform.scale(
@@ -133,7 +139,6 @@ class World():
                     rot=rotator(col_pos * tile_size, row_pos * tile_size,img,10)
                     rotator_group.add(rot)
                 elif ele == 10:
-                    img=pygame.transform.scale(get_image('blob.png'),(tile_size,tile_size))
                     coin=coins(col_pos * tile_size, row_pos * tile_size)
                     coin_group.add(coin)
                 col_pos += 1
@@ -246,18 +251,24 @@ class character():
             self.coins+=1
         self.rect.x += dx
         self.rect.y += dy
-        global y_scroll
+        global y_scroll,x_scroll
         if (self.rect.y<max_down+400):
             y_scroll=max(0,self.rect.y-400)
         else:
             y_scroll=min(max_down,self.rect.y-400)
+        if (self.rect.x < max_right+400):
+            x_scroll=max(0,self.rect.x-400)
+        else:
+            x_scroll=min(max_right,self.rect.x-400)
+        print(self.rect.x)
+        print(max_right+400)
         surface.blit(self.image, self.rect)
 
 class coins(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('blob.png').convert()
-        self.image.set_colorkey(BLACK)
+        self.image =pygame.transform.scale(get_image('coin.png'),(tile_size,tile_size))
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -475,10 +486,9 @@ class laser(pygame.sprite.Sprite):
 class App():
     def __init__(self):
         self.running = True
-        self.size = (screen_width,screen_width)
+        self.size = (1000,1000)
         # self.display_surf = pygame.display.set_mode(self.size)
         self.change=False
-        self.folder=""
     def on_init(self):
         self.running = True 
 
@@ -519,12 +529,13 @@ class App():
                 tile_group.draw(intermediate)
                 rotator_group.draw(intermediate)
                 rotator_group.update()
+                coin_group.draw(intermediate)
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
                     if self.draw_rect_angle(pygame.Rect(rot.x,rot.y,100,200),(rot.x,rot.y),rot.angle):
                         game_over=1
-                screen.blit(intermediate,(0,-y_scroll))
+                screen.blit(intermediate,(-x_scroll,-y_scroll))
             elif game_over==1:
                 screen.fill(BLACK)
                 self.reset()

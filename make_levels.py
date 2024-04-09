@@ -40,6 +40,7 @@ shooter_left= pygame.transform.flip(shooter_img, True, False)
 ninja=pygame.transform.scale(pygame.image.load('ninja/attack/1.png'),(tile_size,tile_size))
 zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile_size))
 gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size,tile_size))
+coin_img= pygame.transform.scale(pygame.image.load('coin.png'),(tile_size,tile_size))
 #define game variables
 clicked = False
 
@@ -122,7 +123,7 @@ def draw_world():
                     img = pygame.transform.scale(zap_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
                 elif world_data[row][col] == 10:
-                    img = pygame.transform.scale(blob_img, (tile_size, (tile_size)))
+                    img = pygame.transform.scale(coin_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
 
 class Button():
