@@ -48,6 +48,7 @@ laser_group = pygame.sprite.Group()
 ninja_group =  pygame.sprite.Group()
 tile_group = pygame.sprite.Group()
 rotator_group = pygame.sprite.Group()
+coin_group=pygame.sprite.Group()
 lasers=[]
 world=None
 clock = pygame.time.Clock()
@@ -73,7 +74,7 @@ def load_new(row):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40},{"rows":40},{"rows":60},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":60}]
+level_data=[{"rows":40},{"rows":40},{"rows":60},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40}]
 
 class World():
     def __init__(self, data):
@@ -131,6 +132,10 @@ class World():
                     img=pygame.transform.scale(get_image('zaps.png'),(2*tile_size,4*tile_size))
                     rot=rotator(col_pos * tile_size, row_pos * tile_size,img,10)
                     rotator_group.add(rot)
+                elif ele == 10:
+                    img=pygame.transform.scale(get_image('blob.png'),(tile_size,tile_size))
+                    coin=coins(col_pos * tile_size, row_pos * tile_size)
+                    coin_group.add(coin)
                 col_pos += 1
             row_pos += 1
 
@@ -187,15 +192,16 @@ class character():
         self.height=self.image.get_height()
         self.vel_y = 0
         self.direction_r = True
+        self.coins=0
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
-                self.vel_y = -19
+                self.vel_y = -14
                 self.in_air = True
             elif not self.jumped:
-                self.vel_y =-17
+                self.vel_y =-13
                 self.jumped=True
-                
+                             
     def draw_char(self, surface,world):
         global game_over,page
         walk_limit = 8
@@ -236,8 +242,8 @@ class character():
                     self.jumped=False
         if pygame.sprite.spritecollide(self, bullet_group, True):
             game_over=1
-        # if pygame.sprite.spritecollide(self,rotator_group,False):
-        #     game_over=1
+        if pygame.sprite.spritecollide(self,coin_group,True):
+            self.coins+=1
         self.rect.x += dx
         self.rect.y += dy
         global y_scroll
@@ -247,6 +253,15 @@ class character():
             y_scroll=min(max_down,self.rect.y-400)
         surface.blit(self.image, self.rect)
 
+class coins(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('blob.png').convert()
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -571,6 +586,8 @@ class App():
         laser_group.empty()
         tile_group.empty()
         rotator_group.empty()
+        coin_group.empty()
+        self.player.coins=0
     def on_execute(self):
         global y_scroll
         if self.on_init() == False:

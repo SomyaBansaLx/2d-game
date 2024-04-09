@@ -5,22 +5,25 @@ from os import path
 
 
 pygame.init()
-
+levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':40,'cols':20}]
+level = 1
 main_page  = 0 
 clock = pygame.time.Clock()
 fps = 60
 y_scroll=0
+x_scroll=0
 #game window
 tile_size = 50
-cols = 20
-rows=60
+cols = levels[level-1]['cols']
+rows= levels[level-1]['rows']
 margin = 200
 screen_width = tile_size * cols
 screen_height = (tile_size * rows) + margin
 
 screen = pygame.display.set_mode((1000, 1000))
-intermediate=pygame.display.set_mode((screen_width,screen_height))
+intermediate=pygame.surface.Surface((screen_width,screen_height))
 pygame.display.set_caption('Level Editor')
+
 
 
 #load images
@@ -39,7 +42,7 @@ zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile
 gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size,tile_size))
 #define game variables
 clicked = False
-level = 1
+
 
 #define colours
 white = (255, 255, 255)
@@ -49,73 +52,78 @@ font = pygame.font.SysFont('Futura', 24)
 
 #create empty tile list
 world_data = []
-for row in range(rows):
-    r = [0] * cols
-    world_data.append(r)
+def load_w():
+    global world_data,screen_width,screen_height,bg_img,intermediate
+    screen_width = tile_size *levels[level-1]['cols']
+    screen_height = (tile_size * levels[level-1]['rows']) + margin
+    bg_img = pygame.transform.scale(bg_img, (screen_width, screen_height - margin))
+    world_data = []
+    for row in range(levels[level-1]['rows']):
+        r = [0] * levels[level-1]['cols']
+        world_data.append(r)
 
-#create boundary
-for tile in range(0, cols):
-    world_data[rows-1][tile] = 2
-    world_data[0][tile] = 1
-for tile in range(0,rows):
-    world_data[tile][0] = 1
-    world_data[tile][cols-1] = 1
+    for tile in range(0, levels[level-1]['cols']):
+        world_data[levels[level-1]['rows']-1][tile] = 2
+        world_data[0][tile] = 1
+    for tile in range(0,levels[level-1]['rows']):
+        world_data[tile][0] = 1
+        world_data[tile][levels[level-1]['cols']-1] = 1
 
-#function for outputting text onto the screen
+load_w()
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     intermediate.blit(img, (x, y))
 
 def draw_grid():
-    for c in range(cols+1):
+    for c in range(levels[level-1]['cols']+1):
         #vertical lines
         pygame.draw.line(intermediate, white, (c * tile_size, 0), (c * tile_size, screen_height - margin))
-    for c in range(rows+1):
+    for c in range(levels[level-1]['rows']+1):
         #horizontal lines
         pygame.draw.line(intermediate, white, (0, c * tile_size), (screen_width, c * tile_size))
 
-
 def draw_world():
-    for row in range(rows):
-        for col in range(cols):
+    for row in range(levels[level-1]['rows']):
+        for col in range(levels[level-1]['cols']):
             if world_data[row][col] > 0:
                 if world_data[row][col] == 1:
                     #dirt blocks
                     img = pygame.transform.scale(dirt_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-                if world_data[row][col] == 2:
+                elif world_data[row][col] == 2:
                     #grass blocks
                     img = pygame.transform.scale(grass_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-                if world_data[row][col] == 3:
+                elif world_data[row][col] == 3:
                     #enemy blocks
                     img = pygame.transform.scale(blob_img, (tile_size, int(tile_size * 0.75)))
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size * 0.25)))
-                if world_data[row][col] == 4:
+                elif world_data[row][col] == 4:
                     #horizontally moving platform
                     img = pygame.transform.scale(shooter_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-                if world_data[row][col] == 5:
+                elif world_data[row][col] == 5:
                     #vertically moving platform
                     img = pygame.transform.scale(shooter_left, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-                if world_data[row][col] == 6:
+                elif world_data[row][col] == 6:
                     #lava
                     img = pygame.transform.scale(shooter_img, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size + (tile_size // 2)))
-                if world_data[row][col] == 7:
+                elif world_data[row][col] == 7:
                     img = pygame.transform.scale(ninja, (tile_size, tile_size))
                     intermediate.blit(img, (col * tile_size + (tile_size // 4), row * tile_size + (tile_size // 4)))
-                if world_data[row][col] == 8:
+                elif world_data[row][col] == 8:
                     #exit
                     img = pygame.transform.scale(gayab_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-                if world_data[row][col] == 9:
+                elif world_data[row][col] == 9:
                     #exit
                     img = pygame.transform.scale(zap_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-
-
+                elif world_data[row][col] == 10:
+                    img = pygame.transform.scale(blob_img, (tile_size, (tile_size)))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
 
 class Button():
     def __init__(self, x, y, image):
@@ -126,10 +134,9 @@ class Button():
 
     def draw(self):
         action = False
-
         #get mouse position
         pos = pygame.mouse.get_pos()
-        pos_new=(pos[0],pos[1]+y_scroll)
+        pos_new=(pos[0]+x_scroll,pos[1]+y_scroll)
         #check mouseover and clicked conditions
         if self.rect.collidepoint(pos_new):
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
@@ -144,20 +151,23 @@ class Button():
         return action
 
 #create load and save buttons
-save_button = Button(screen_width // 2 - 150, screen_height - 80, save_img)
-load_button = Button(screen_width // 2 + 50, screen_height - 80, load_img)
+save_button = Button(300, screen_height - 80, save_img)
+load_button = Button(500, screen_height - 80, load_img)
 
 #main game loop
 run = True
 while run:
     
     clock.tick(fps)
-    
     #draw background
     screen.fill(green)
+    intermediate=pygame.surface.Surface((screen_width,screen_height))
+    intermediate.fill((0,0,0))
     intermediate.blit(bg_img, (0, 0))
 
-    #load and save level
+    draw_grid()
+    draw_world()
+
     if save_button.draw():
         #save level data
         pickle_out = open(f'level{level}_data', 'wb')
@@ -168,13 +178,6 @@ while run:
         if path.exists(f'level{level}_data'):
             pickle_in = open(f'level{level}_data', 'rb')
             world_data = pickle.load(pickle_in)
-
-
-    #show the grid and draw the level tiles
-    draw_grid()
-    draw_world()
-
-
     #text showing current level
     draw_text(f'Level: {level}', font, white, tile_size, screen_height - 60)
     draw_text('Press UP or DOWN to change level', font, white, tile_size, screen_height - 40)
@@ -188,34 +191,52 @@ while run:
         if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
             clicked = True
             pos = pygame.mouse.get_pos()
-            x = pos[0] // tile_size
+            x = (pos[0]+x_scroll) // tile_size
             y = (pos[1]+y_scroll) // tile_size
             #check that the coordinates are within the tile area
-            if x < cols and y < rows:
+            if x <levels[level-1]['cols'] and y <levels[level-1]['rows']:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 9:
+                    if world_data[y][x] > 10:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 8
+                        world_data[y][x] = 10
+        elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
+            pos = pygame.mouse.get_pos()
+            x = (pos[0]+x_scroll) // tile_size
+            y = (pos[1]+y_scroll) // tile_size
+            if x <levels[level-1]['cols']  and y < levels[level-1]['rows']:
+                world_data[y][x] =0
+        
         if event.type == pygame.MOUSEBUTTONUP:
             clicked = False
-        #up and down key presses to change level number
+        
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                level += 1
+                level =min(level+1,len(levels))
+                load_w()
+                save_button.rect.topleft=(300,screen_height-80)
+                load_button.rect.topleft=(500,screen_height-80)
             elif event.key == pygame.K_DOWN and level > 1:
                 level -= 1
+                load_w()
+                save_button.rect.topleft=(300,screen_height-80)
+                load_button.rect.topleft=(500,screen_height-80)
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 4:
                 y_scroll=max(0,y_scroll-30)
-                
             elif event.button == 5:
-                y_scroll=min(rows*tile_size-800,30+y_scroll)
-    screen.blit(intermediate,(0,-y_scroll))
+                y_scroll+=30
+        if pygame.key.get_pressed()[K_RIGHT]:
+            x_scroll+=50
+        if pygame.key.get_pressed()[K_LEFT]:
+            x_scroll=max(0,x_scroll-50)
+        x_scroll=min(levels[level-1]['cols']*tile_size-1000,x_scroll)
+        y_scroll=min(y_scroll,levels[level-1]['rows']*tile_size-800)
+    screen.blit(intermediate,(-x_scroll,-y_scroll))
     #update game display window
     pygame.display.flip()
 
