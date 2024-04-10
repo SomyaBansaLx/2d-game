@@ -5,6 +5,8 @@ from os import path
 import os
 import time
 import math
+
+from pygame.sprite import Group
 pygame.init()
 
 _image_library = {}
@@ -49,6 +51,8 @@ ninja_group =  pygame.sprite.Group()
 tile_group = pygame.sprite.Group()
 rotator_group = pygame.sprite.Group()
 coin_group=pygame.sprite.Group()
+volt_group=pygame.sprite.Group()
+spike_group=pygame.sprite.Group()
 lasers=[]
 world=None
 clock = pygame.time.Clock()
@@ -80,7 +84,7 @@ def load_new(row,col):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40,"cols":40},{"rows":40,'cols':20},{"rows":60,'cols':20},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20}]
+level_data=[{"rows":40,"cols":40,'x':50,'y':50},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
 
 class World():
     def __init__(self, data):
@@ -141,6 +145,12 @@ class World():
                 elif ele == 10:
                     coin=coins(col_pos * tile_size, row_pos * tile_size)
                     coin_group.add(coin)
+                elif ele == 11:
+                    volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.jpg'))
+                    volt_group.add(volt)
+                elif ele == 12:
+                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
+                    spike_group.add(spik)
                 col_pos += 1
             row_pos += 1
 
@@ -249,6 +259,9 @@ class character():
             game_over=1
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
+        if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
+            game_over=1
+            
         self.rect.x += dx
         self.rect.y += dy
         global y_scroll,x_scroll
@@ -315,6 +328,39 @@ class bullet(pygame.sprite.Sprite) :
                 self.kill()
         self.rect.x+=dx 
 
+class Volts(pygame.sprite.Sprite):
+    def __init__(self,x,y,img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image =img
+        # self.image.set_colorkey(WHITE)
+        self.image= pygame.transform.scale(self.image,(3*tile_size,tile_size))
+        self.rect=self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        
+    def update(self):
+        self.image=pygame.transform.flip(self.image,False,True)
+
+class spike(pygame.sprite.Sprite):
+    def __init__(self,x,y,img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image =img
+        # self.image.set_colorkey(WHITE)
+        self.size=(int(tile_size),int(tile_size))
+        self.image= pygame.transform.scale(self.image,self.size)
+        self.orig_img=self.image
+        self.rect=self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.topleft=self.rect.topleft
+        self.angle=0
+        
+    def update(self):
+        self.angle=(self.angle+3)%360
+        self.image=pygame.transform.rotate(self.orig_img,self.angle)
+        self.image=pygame.transform.scale(self.image,self.size)
+        new_rect=self.image.get_rect()
+        new_rect.topleft=self.rect.topleft
 class Ninja(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -405,7 +451,6 @@ class rotator(pygame.sprite.Sprite):
             self.angle=(self.angle+3)%360
         self.blitRotate((self.x,self.y),(self.x,self.y),self.angle)
         
-        
 class tiles(pygame.sprite.Sprite):
     def __init__(self, x, y,image,time):
         pygame.sprite.Sprite.__init__(self)
@@ -444,7 +489,7 @@ class shooter(pygame.sprite.Sprite):
         self.shoot_counter += 1
         if self.shoot_counter == self.rate:
             self.shoot_counter=0
-            bullet_group.add(bullet(self.rect.x,self.rect.y,self.move_direction,'lava.png',self.move_speed,tile_size//2,tile_size//2))
+            bullet_group.add(bullet(self.rect.x,self.rect.y,self.move_direction,'virus.png',self.move_speed,int(2*tile_size//3),int(2*tile_size//3)))
             
 class laser(pygame.sprite.Sprite):
     def __init__(self, x, y,is_right,move_speed,is_up):
@@ -530,6 +575,10 @@ class App():
                 rotator_group.draw(intermediate)
                 rotator_group.update()
                 coin_group.draw(intermediate)
+                volt_group.draw(intermediate)
+                volt_group.update()
+                spike_group.draw(intermediate)
+                spike_group.update()
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
@@ -555,7 +604,7 @@ class App():
                         lst = os.listdir(xx) # your directory path
                         num = len(lst)-1
                         load(level)
-                        self.player = character(50, screen_height-200,xx,num) 
+                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx,num) 
                         self.change=False 
             else:
                 self.change=True  
@@ -598,6 +647,8 @@ class App():
         tile_group.empty()
         rotator_group.empty()
         coin_group.empty()
+        volt_group.empty()
+        spike_group.empty()
         self.player.coins=0
     def on_execute(self):
         global y_scroll

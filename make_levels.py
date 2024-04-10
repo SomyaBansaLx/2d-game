@@ -41,11 +41,10 @@ ninja=pygame.transform.scale(pygame.image.load('ninja/attack/1.png'),(tile_size,
 zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile_size))
 gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size,tile_size))
 coin_img= pygame.transform.scale(pygame.image.load('coin.png'),(tile_size,tile_size))
-#define game variables
+volts_img= pygame.transform.scale(pygame.image.load('volts.jpg'),(tile_size,tile_size))
+spike_img= pygame.transform.scale(pygame.image.load('spike.jpg'),(tile_size,tile_size))
 clicked = False
 
-
-#define colours
 white = (255, 255, 255)
 green = (144, 201, 120)
 
@@ -125,6 +124,12 @@ def draw_world():
                 elif world_data[row][col] == 10:
                     img = pygame.transform.scale(coin_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif world_data[row][col] == 11:
+                    img = pygame.transform.scale(volts_img, (tile_size, (tile_size)))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif world_data[row][col] == 12:
+                    img = pygame.transform.scale(spike_img, (tile_size, (tile_size)))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
 
 class Button():
     def __init__(self, x, y, image):
@@ -199,12 +204,12 @@ while run:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 10:
+                    if world_data[y][x] > 12:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 10
+                        world_data[y][x] = 12
         elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
             pos = pygame.mouse.get_pos()
             x = (pos[0]+x_scroll) // tile_size
