@@ -4,7 +4,7 @@ import pickle
 from os import path
 import os
 import time
-import math
+import random
 
 from pygame.sprite import Group
 pygame.init()
@@ -54,6 +54,10 @@ coin_group=pygame.sprite.Group()
 volt_group=pygame.sprite.Group()
 spike_group=pygame.sprite.Group()
 moving_platform_group = pygame.sprite.Group()
+my_hospital_group = pygame.sprite.Group()
+people_group = pygame.sprite.Group()
+people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
+# vertical_platform_group = pygame.sprite.Group()
 lasers=[]
 world=None
 clock = pygame.time.Clock()
@@ -100,7 +104,7 @@ class World():
         row_pos = 0
         for row in data:
             col_pos = 0
-            x1 = 0 
+            # x1 = 0 
             for ele in row:
                 if ele == 1:
                     img_rect = dirt_img.get_rect()
@@ -154,15 +158,19 @@ class World():
                     spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
                     spike_group.add(spik)
                 elif ele == 13:
-                    x1 = col_pos*tile_size
-                    img_rect = dirt_img.get_rect()
-                    img_rect.x = tile_size*col_pos
-                    img_rect.y = tile_size*row_pos
-                    self.tile_list.append((dirt_img, img_rect))
-                elif ele == 14:
-                    x2 = col_pos*tile_size
-                    my_platform  = moving_platform(x1,x2,row_pos*tile_size,2)
-                    moving_platform_group.add(my_platform)                    
+                    my_img = get_image(random(people_images))
+                    my_img = pygame.transform.scale(my_img,(50,50))
+                    people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
+                # elif ele == 13:
+                #     x1 = col_pos*tile_size
+                #     img_rect = dirt_img.get_rect()
+                #     img_rect.x = tile_size*col_pos
+                #     img_rect.y = tile_size*row_pos
+                #     self.tile_list.append((dirt_img, img_rect))
+                # elif ele == 14:
+                #     x2 = col_pos*tile_size
+                #     my_platform  = moving_platform(x1,x2,row_pos*tile_size,2)
+                #     moving_platform_group.add(my_platform)                    
                     
                 col_pos += 1
             row_pos += 1
@@ -223,6 +231,80 @@ class moving_platform(pygame.sprite.Sprite):
 my_new_platform = moving_platform(100,400,600,1)
 moving_platform_group.add(my_new_platform)
 
+class vertical_platform(pygame.sprite.Sprite):
+
+    def __init__(self, x,y1,y2, speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.y1=y1
+        self.y2=y2
+        self.rect.x = x
+        self.rect.y = y1
+        self.speed = speed
+        self.direction = 1 
+
+    def update(self):
+        self.rect.y += self.speed * self.direction    
+        if self.rect.bottom > self.y2  or self.rect.top < self.y1:
+            self.direction *= -1
+
+    def draw_platform(self):
+        screen.blit(self.image,self.rect)
+
+my_new_platform = vertical_platform(600,900,1300,2)
+moving_platform_group.add(my_new_platform)
+
+class Health_Bar():
+    def __init__(self,max_health):
+        self.max_health = max_health
+        self.current_health = max_health
+        self.width = 200
+        self.infect = 0 ; 
+
+    def update(self, health,vaccine,vaccine_health):
+        self.current_health = health
+        health_ratio = self.current_health / self.max_health
+        bar_width = int(self.width * health_ratio)
+        health_bar_rect_1 = pygame.Rect(0,0, self.width, 50)
+        pygame.draw.rect(screen, BLACK, health_bar_rect_1)
+        if self.infect==0 :
+            health_bar_rect_2 = pygame.Rect(0,0, bar_width, 50)
+            pygame.draw.rect(intermediate, GREEN, health_bar_rect_2)
+        else :
+            health_bar_rect_2 = pygame.Rect(0,0, bar_width, 50)
+            pygame.draw.rect(intermediate, RED, health_bar_rect_2)
+        
+        if vaccine==1:
+            health_bar_rect_3 = pygame.Rect(200,0, vaccine_health, 50)
+            pygame.draw.rect(intermediate, LIGHT_GREY, health_bar_rect_3)
+
+
+class Hospital(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image("hospital.jpeg"),(100,100))  # Load hospital image
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        my_hospital_group.add(self)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class People(pygame.sprite.Sprite):
+
+    def __init__(self, x, y,img):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        people_group.add(self)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
 class character():
     def __init__(self, x, y,folder,len):
         self.images_r = []
@@ -230,6 +312,10 @@ class character():
         self.index = 0
         self.counter = 0
         self.jumped = False
+        self.health = 100
+        self.health_bar = Health_Bar(100)
+        self.vaccine = 0
+        self.vaccine_health = 0
         for i in range(1, len+1):
             img = pygame.transform.scale(get_image(f'{folder}/guy{i}.png'), (40, 80))
             img.set_colorkey(BLACK)
@@ -261,6 +347,12 @@ class character():
         key = pygame.key.get_pressed()
         dx = 0
         dy = 0
+        if self.vaccine:
+            self.vaccine_health -= 0.04
+            if(self.vaccine_health<=0):
+                self.vaccine = 0
+
+        self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
         if key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
             dx = -5
             self.counter += 1
@@ -306,12 +398,34 @@ class character():
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
+        
+        for hosp in my_hospital_group:
+            if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                self.vaccine = 1
+                self.vaccine_health = 200
+
+        # for moving_tile in vertical_platform_group:
+        #     if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+        #         dx = 0
+        #     if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+        #         if self.vel_y < 0:
+        #             dy = moving_tile.rect.y+tile_size - self.rect.top
+        #             self.vel_y = 0
+        #         elif self.vel_y >= 0:
+        #             dy = moving_tile.rect.y - self.rect.bottom
+        #             self.vel_y = 0
+        #             self.in_air=False
+        #             self.jumped=False
+
         if pygame.sprite.spritecollide(self, bullet_group, True):
-            game_over=1
+            self.health-=5
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
         if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
-            game_over=1
+            self.health-=5
+
+        if self.health==0:
+            game_over = 1
             
         self.rect.x += dx
         self.rect.y += dy
@@ -324,9 +438,9 @@ class character():
             x_scroll=max(0,self.rect.x-400)
         else:
             x_scroll=min(max_right,self.rect.x-400)
-        print(self.rect.x)
-        print(max_right+400)
         surface.blit(self.image, self.rect)
+        if self.rect.x<0 or self.rect.y<0:
+            game_over = 1
 
 class coins(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -629,6 +743,11 @@ class App():
                 spike_group.update()
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
+                people_group.draw()
+                my_hop = Hospital(400,540)
+                my_hospital_group.draw(intermediate)
+                # vertical_platform_group.update()
+                # vertical_platform_group.draw(intermediate)
 
                 for tile in tile_group.sprites():
                     tile.draww()
