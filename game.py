@@ -53,6 +53,7 @@ rotator_group = pygame.sprite.Group()
 coin_group=pygame.sprite.Group()
 volt_group=pygame.sprite.Group()
 spike_group=pygame.sprite.Group()
+moving_platform_group = pygame.sprite.Group()
 lasers=[]
 world=None
 clock = pygame.time.Clock()
@@ -99,6 +100,7 @@ class World():
         row_pos = 0
         for row in data:
             col_pos = 0
+            x1 = 0 
             for ele in row:
                 if ele == 1:
                     img_rect = dirt_img.get_rect()
@@ -151,6 +153,17 @@ class World():
                 elif ele == 12:
                     spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
                     spike_group.add(spik)
+                elif ele == 13:
+                    x1 = col_pos*tile_size
+                    img_rect = dirt_img.get_rect()
+                    img_rect.x = tile_size*col_pos
+                    img_rect.y = tile_size*row_pos
+                    self.tile_list.append((dirt_img, img_rect))
+                elif ele == 14:
+                    x2 = col_pos*tile_size
+                    my_platform  = moving_platform(x1,x2,row_pos*tile_size,2)
+                    moving_platform_group.add(my_platform)                    
+                    
                 col_pos += 1
             row_pos += 1
 
@@ -183,7 +196,32 @@ class Btn():
         else:
             self.click=False
         return self.click
-start_btn = Btn(350,450,300,100,'start.jpg')        
+start_btn = Btn(250,350,500,300,'start_btn2.png')    
+
+
+class moving_platform(pygame.sprite.Sprite):
+
+    def __init__(self, x1,x2,y, speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.x1= x1
+        self.x2=x2
+        self.rect.x = x1
+        self.rect.y = y
+        self.speed = speed
+        self.direction = 1 
+
+    def update(self):
+        self.rect.x += self.speed * self.direction    
+        if self.rect.left <self.x1  or self.rect.right > self.x2:
+            self.direction *= -1
+
+    def draw_platform(self):
+        screen.blit(self.image,self.rect)
+
+my_new_platform = moving_platform(100,400,600,1)
+moving_platform_group.add(my_new_platform)
 
 class character():
     def __init__(self, x, y,folder,len):
@@ -252,6 +290,19 @@ class character():
                     self.vel_y = 0
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
+                    self.vel_y = 0
+                    self.in_air=False
+                    self.jumped=False
+
+        for moving_tile in moving_platform_group:
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0
+            if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                if self.vel_y < 0:
+                    dy = moving_tile.rect.y+tile_size - self.rect.top
+                    self.vel_y = 0
+                elif self.vel_y >= 0:
+                    dy = moving_tile.rect.y - self.rect.bottom
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
@@ -417,9 +468,6 @@ class Ninja(pygame.sprite.Sprite):
                     self.move_direction=1
                     self.in_attack=True
         
-    # def update_2(self,x,y):
-    #     if self.y==y :
-    #         if self.x<=x:
 class rotator(pygame.sprite.Sprite):
     def __init__(self, x, y,image,move_speed):
         pygame.sprite.Sprite.__init__(self)
@@ -579,6 +627,9 @@ class App():
                 volt_group.update()
                 spike_group.draw(intermediate)
                 spike_group.update()
+                moving_platform_group.update()
+                moving_platform_group.draw(intermediate)
+
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
@@ -627,7 +678,7 @@ class App():
                 time.sleep(0.2)
 
         if page == 0 :
-            my_img = get_image('first_page.jpg')
+            my_img = get_image('4.jpeg')
             my_img = pygame.transform.scale(my_img,(1000,1000))
             screen.blit(my_img,my_img.get_rect())
             
