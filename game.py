@@ -743,7 +743,7 @@ class App():
                 spike_group.update()
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                people_group.draw()
+                people_group.draw(intermediate)
                 my_hop = Hospital(400,540)
                 my_hospital_group.draw(intermediate)
                 # vertical_platform_group.update()
@@ -819,6 +819,7 @@ class App():
         coin_group.empty()
         volt_group.empty()
         spike_group.empty()
+        people_group.empty()
         self.player.coins=0
     def on_execute(self):
         global y_scroll
