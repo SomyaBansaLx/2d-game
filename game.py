@@ -161,10 +161,10 @@ class World():
                     spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
                     spike_group.add(spik)
                 elif ele == 13:
-                    my_img = get_image(random(people_images))
-                    my_img = pygame.transform.scale(my_img,(50,50))
+                    my_img = get_image(random.choice(people_images))
+                    my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
-                
+
                     
                 col_pos += 1
             row_pos += 1
@@ -455,19 +455,6 @@ class character():
             if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 sanitizer_gun_group.remove(guns)
                 self.sanitizer_bullet_count +=5
-
-        # for moving_tile in vertical_platform_group:
-        #     if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-        #         dx = 0
-        #     if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-        #         if self.vel_y < 0:
-        #             dy = moving_tile.rect.y+tile_size - self.rect.top
-        #             self.vel_y = 0
-        #         elif self.vel_y >= 0:
-        #             dy = moving_tile.rect.y - self.rect.bottom
-        #             self.vel_y = 0
-        #             self.in_air=False
-        #             self.jumped=False
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
             self.health-=5
