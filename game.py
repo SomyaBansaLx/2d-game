@@ -389,28 +389,19 @@ class character():
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
-
+        
         for moving_tile in moving_platform_group:
-            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y-1, self.width, self.height):
                 dx = 0
             if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y < 0 and not self.collide_down:
+                if self.vel_y < 0 :
                     dy = moving_tile.rect.y+tile_size - self.rect.top
                     self.vel_y = 0
-                    self.collide_up=True
-                elif self.vel_y >= 0 and not self.collide_up:
+                elif self.vel_y >= 0:
                     dy = moving_tile.rect.y - self.rect.bottom
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
-                    self.collide_down=True
-                else:
-                    game_over=1
-                    self.health=0
-                    return
-            else:
-                self.collide_down=False
-                self.collide_up=False
                 
         
         for hosp in my_hospital_group:
