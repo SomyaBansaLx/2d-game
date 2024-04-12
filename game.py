@@ -350,7 +350,7 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.rect.x+=dx 
 
 class character():
-    def __init__(self, x, y,folder,len):
+    def __init__(self, x, y,file,imgs):
         self.images_r = []
         self.images_l = []
         self.index = 0
@@ -361,9 +361,9 @@ class character():
         self.vaccine = 0
         self.vaccine_health = 0
         self.sanitizer_bullet_count = 0 
-        for i in range(1, len+1):
-            img = pygame.transform.scale(get_image(f'{folder}/guy{i}.png'), (40, 80))
-            img.set_colorkey(BLACK)
+        for i in range(0, len(imgs)):
+            img = pygame.transform.scale(get_image(file+imgs[i]), (40, 80))
+            # img.set_colorkey(BLACK)
             img_flip = pygame.transform.flip(img, True, False)
             self.images_r.append(img)
             self.images_l.append(img_flip)
@@ -601,7 +601,7 @@ class spike(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image =img
         self.image.set_colorkey(BLACK)
-        self.size=(int(1.5*tile_size),int(1.5*tile_size))
+        self.size=(int(1.2*tile_size),int(1.2*tile_size))
         self.image= pygame.transform.scale(self.image,self.size)
         self.orig_img=self.image
         self.rect=self.image.get_rect()
@@ -616,6 +616,7 @@ class spike(pygame.sprite.Sprite):
         self.image=pygame.transform.scale(self.image,self.size)
         new_rect=self.image.get_rect()
         new_rect.topleft=self.rect.topleft
+        
 class Ninja(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -779,7 +780,7 @@ class laser(pygame.sprite.Sprite):
         if self.move_counter==self.move_speed:
             self.rect.y-=self.move_direction*3
             self.move_counter=0
-                          
+                        
 class App():
     def __init__(self):
         self.running = True
@@ -861,7 +862,7 @@ class App():
             screen.fill(BLACK)
             screen.blit(level_bg,(0,0))
             if self.change:
-                for i in range (1,3) :
+                for i in range (1,5) :
                     xx = f"char{i}"
                     screen.blit(pygame.transform.scale(get_image(xx+"/guy1.png"),(300,300)),pygame.Rect(((i-1)%2)*500+100,100+500*int((i-1)/2),300,300))
                     char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"Level {i}.png")
@@ -870,10 +871,11 @@ class App():
                         click_fx.play()
                         game_over=-1
                         page=3 
-                        lst = os.listdir(xx) # your directory path
-                        num = len(lst)-1
+                        lst = os.listdir(xx)
+                        print(lst)
+                        lst.pop(lst.index("guy1.png"))
                         load(level)
-                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx,num) 
+                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx+'/',lst) 
                         self.change=False
             else:
                 self.change=True  
@@ -911,10 +913,9 @@ class App():
                 click_fx.play()
             if quit_btn.update():
                 pygame.quit()
-                click_fx.play()
             if settings_btn.update():
                 page=-1
-        
+                intro_fx.fadeout(0)
         if page==-1:
             pass
         pygame.display.flip()

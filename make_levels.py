@@ -136,6 +136,9 @@ def draw_world():
                 elif  world_data[row][col] == 13:
                     img = pygame.transform.scale(people_img,(50,100))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 14:
+                    img = pygame.transform.scale(gayab_img,(tile_size,tile_size))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
                     
 class Button():
     def __init__(self, x, y, image):
@@ -210,12 +213,12 @@ while run:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 13:
+                    if world_data[y][x] > 14:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 13
+                        world_data[y][x] = 14
         elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
             pos = pygame.mouse.get_pos()
             x = (pos[0]+x_scroll) // tile_size
