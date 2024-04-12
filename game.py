@@ -165,7 +165,8 @@ class World():
                     my_img = get_image(random.choice(people_images))
                     my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
-
+                elif ele == 14:
+                    pass
                     
                 col_pos += 1
             row_pos += 1
@@ -204,54 +205,36 @@ start_btn = Btn(250,350,400,200,'play.jpeg')
 quit_btn = Btn(250,550,400,200,'quit.jpeg')
 settings_btn=Btn(800,900,100,100,'quit.jpeg')
 
-class moving_platform(pygame.sprite.Sprite):
+class platform(pygame.sprite.Sprite):
 
-    def __init__(self, x1,x2,y, speed):
+    def __init__(self,x1,x2,y1,y2,x_speed,y_speed):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
         self.rect = self.image.get_rect()
         self.x1= x1
         self.x2=x2
-        self.rect.x = x1
-        self.rect.y = y
-        self.speed = speed
-        self.direction = 1 
-
-    def update(self):
-        self.rect.x += self.speed * self.direction    
-        if self.rect.left <self.x1  or self.rect.right > self.x2:
-            self.direction *= -1
-
-    def draw_platform(self):
-        screen.blit(self.image,self.rect)
-
-my_new_platform = moving_platform(100,400,600,2)
-moving_platform_group.add(my_new_platform)
-my_new_platform = moving_platform(1200,1800,1050,2)
-moving_platform_group.add(my_new_platform)
-
-class vertical_platform(pygame.sprite.Sprite):
-
-    def __init__(self, x,y1,y2, speed):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
-        self.rect = self.image.get_rect()
         self.y1=y1
         self.y2=y2
-        self.rect.x = x
+        self.rect.x = x1
         self.rect.y = y1
-        self.speed = speed
-        self.direction = 1 
+        self.x_speed = x_speed
+        self.y_speed = y_speed
+        self.x_direction = 1 
+        self.y_direction = 1
 
     def update(self):
-        self.rect.y += self.speed * self.direction    
+        self.rect.x += self.x_speed * self.x_direction   
+        self.rect.y += self.y_speed * self.y_direction 
+        if self.rect.left <self.x1  or self.rect.right > self.x2:
+            self.x_direction *= -1
         if self.rect.bottom > self.y2  or self.rect.top < self.y1:
-            self.direction *= -1
+            self.y_direction *= -1
 
-    def draw_platform(self):
-        screen.blit(self.image,self.rect)
-
-my_new_platform = vertical_platform(600,900,1300,2)
+my_new_platform =platform(100,400,600,600,2,0)
+moving_platform_group.add(my_new_platform)
+my_new_platform = platform(1200,1800,1050,1050,2,0)
+moving_platform_group.add(my_new_platform)
+my_new_platform = platform(600,600,900,1300,0,2)
 moving_platform_group.add(my_new_platform)
 
 class Health_Bar():
@@ -316,9 +299,6 @@ class SanitizerGun(pygame.sprite.Sprite):
         self.taken = 0
         sanitizer_gun_group.add(self)
 
-    def draw(self, surface):
-            surface.blit(self.image, self.rect)
-
 my_gun = SanitizerGun(100,200)
 
 class Sanitizerbullet(pygame.sprite.Sprite) :
@@ -378,6 +358,7 @@ class character():
         self.coin_img=pygame.transform.scale(coin_img,(tile_size,tile_size))
         self.collide_up=False
         self.collide_down=False
+        self.shot=False
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
@@ -393,6 +374,7 @@ class character():
         key = pygame.key.get_pressed()
         dx = 0
         dy = 0
+        col_thresh=10
         if self.vaccine:
             self.vaccine_health -= 0.04
             if(self.vaccine_health<=0):
@@ -415,14 +397,18 @@ class character():
             self.image = self.images_r[self.index]
         else:
             self.image = self.images_l[self.index]
-        if key[pygame.K_s] and self.sanitizer_bullet_count>0:
+        if key[pygame.K_s] and self.sanitizer_bullet_count>0 and not self.shot:
             self.sanitizer_bullet_count -=1
+            self.shot=True
             if self.direction_r==True :
                 bullet_dir = 1
             else :
                 bullet_dir = -1
-
             sanitizer_bullet_group.add(Sanitizerbullet(self.rect.x+50,self.rect.y+10,bullet_dir,5,20,20,20))
+        else:
+            self.shot=False
+
+            
 
         dy = self.vel_y
         self.vel_y = min(10, self.vel_y+1)
@@ -440,17 +426,22 @@ class character():
                     self.jumped=False
         
         for moving_tile in moving_platform_group:
-            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y-1, self.width, self.height):
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
+                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction, self.rect.y, self.width, self.height):
+                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
             if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y < 0 :
-                    dy = moving_tile.rect.y+tile_size - self.rect.top
+                if self.vel_y<0 :
+                    dy = moving_tile.rect.bottom - self.rect.top
                     self.vel_y = 0
-                elif self.vel_y >= 0:
-                    dy = moving_tile.rect.y - self.rect.bottom
-                    self.vel_y = 0
-                    self.in_air=False
-                    self.jumped=False
+                elif self.vel_y>=0:
+                    if self.vel_y>0 :
+                        dy = moving_tile.rect.top - self.rect.bottom -1
+                        self.vel_y=0
+                        self.in_air=False
+                        self.jumped=False
+                    if moving_tile.x_speed !=0 :
+                        dx+=moving_tile.x_direction*moving_tile.x_speed
                 
         
         for hosp in my_hospital_group:
@@ -889,6 +880,8 @@ class App():
         volt_group.empty()
         spike_group.empty()
         people_group.empty()
+        sanitizer_gun_group.empty()
+        sanitizer_bullet_group.empty()
         self.player.coins=0
     def on_execute(self):
         global y_scroll
@@ -896,7 +889,6 @@ class App():
             self.running = False
 
         while self.running:
-            ev=None
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
