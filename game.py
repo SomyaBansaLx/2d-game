@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from pygame import mixer
 import pickle
 from os import path
 import os
@@ -7,8 +8,33 @@ import time
 import random
 
 from pygame.sprite import Group
+pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
+mixer.init()
 
+#ALL VARS
+page  = 0
+dirt_tile=None
+grass_tile=None
+tile_size = 50
+rows=40
+cols=20
+lasers=[]
+world=None
+clock = pygame.time.Clock()
+level=1
+screen_width=cols*tile_size
+screen_height=rows*tile_size
+screen=pygame.display.set_mode((1000,1000))
+intermediate=pygame.surface.Surface((screen_width,screen_height))
+max_down=screen_height-1000
+y_scroll=max_down
+max_right=screen_width-1000
+x_scroll=max_right
+game_over=0
+people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
+
+#load images
 _image_library = {}
 def get_image(path):
     global _image_library
@@ -18,6 +44,13 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path).convert()
         _image_library[path] = image
     return image
+
+level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
+end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
+coin_img=get_image('coin.png')
+
+#ALL COLORS
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 LIGHT_BLACK = (80, 80, 80)
@@ -37,12 +70,7 @@ LIGHT_BROWN = (196, 164, 132)
 BROWN = (111, 78, 55)
 SHADOW_BROWN = (111, 70, 40)
 
-page  = 0
-dirt_tile=None
-grass_tile=None
-tile_size = 50
-rows=40
-cols=20
+#ALL GROUPS
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
@@ -59,26 +87,19 @@ people_group = pygame.sprite.Group()
 bacteria_group = pygame.sprite.Group()
 sanitizer_gun_group =  pygame.sprite.Group()
 sanitizer_bullet_group =  pygame.sprite.Group()
-people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
-# vertical_platform_group = pygame.sprite.Group()
-lasers=[]
-world=None
-clock = pygame.time.Clock()
-level=1
-screen_width=cols*tile_size
-screen_height=rows*tile_size
-screen=pygame.display.set_mode((1000,1000))
-intermediate=pygame.surface.Surface((screen_width,screen_height))
-max_down=screen_height-1000
-y_scroll=max_down
-max_right=screen_width-1000
-x_scroll=max_right
-game_over=0
-level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
-bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
-coin_img=get_image('coin.png')
-# end_bg.set_colorkey(BLACK)
+
+#ADD MUSIC
+coin_fx=pygame.mixer.Sound('coin.wav')
+coin_fx.set_volume(0.5)
+jump_fx=pygame.mixer.Sound('jump.wav')
+jump_fx.set_volume(0.5)
+intro_fx=pygame.mixer.Sound('intro.mp3')
+intro_fx.set_volume(0.1)
+worldmap_fx=pygame.mixer.Sound('worldmap.mp3')
+worldmap_fx.set_volume(0.5)
+click_fx=pygame.mixer.Sound('click.mp3')
+click_fx.set_volume(0.5)
+
 def load_new(row,col):
     global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
     rows=row
@@ -203,7 +224,7 @@ class Btn():
     
 start_btn = Btn(250,350,400,200,'play.jpeg')    
 quit_btn = Btn(250,550,400,200,'quit.jpeg')
-settings_btn=Btn(800,900,100,100,'quit.jpeg')
+settings_btn=Btn(800,900,100,100,'settings.jpeg')
 
 class platform(pygame.sprite.Sprite):
 
@@ -422,24 +443,23 @@ class character():
         for tile in world.tile_list:  
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
-                if(tile[1].x>self.rect.x):
-                    right=True
-                else:
-                    left=True
             elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y==0:
-                    up=True
                 if self.vel_y < 0:
                     dy = tile[1].bottom - self.rect.top
                     self.vel_y = 0
-                    up=True
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
-                    down=True
-        
+            if abs(tile[1].x-self.rect.x-self.rect.width)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                right=True
+            if abs(tile[1].x+tile[1].width-self.rect.x)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                left=True
+            if abs(tile[1].bottom-self.rect.y)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                up=True
+            if abs(tile[1].y-self.rect.bottom)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                down=True
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
@@ -449,14 +469,17 @@ class character():
                         left=True
                     else:
                         right=True
-            if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x>=moving_tile.rect.x + moving_tile.rect.width):
-                if moving_tile.rect.bottom<self.rect.y and self.rect.y+dy<moving_tile.rect.bottom:
+            if not (self.rect.x+self.rect.width < moving_tile.rect.x or self.rect.x>moving_tile.rect.x + moving_tile.rect.width):
+                if moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed-self.rect.y<2 and self.rect.y+dy<=moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed:
                     dy=moving_tile.rect.bottom-self.rect.y
                     self.vel_y=0
                     up=True
                 if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
                     self.rect.bottom=moving_tile.rect.top-2
-                    dy=0
+                    if(moving_tile.y_direction==-1):
+                        dy=-moving_tile.y_speed
+                    else:
+                        dy=0
                     dx+=moving_tile.x_speed*moving_tile.x_direction
                     self.in_air=False
                     self.jumped=False
@@ -477,6 +500,7 @@ class character():
             self.health-=5
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
+            coin_fx.play()
         if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
             self.health-=5
 
@@ -783,6 +807,7 @@ class App():
         global page,game_over,level
         if page == 3 :
             if game_over==-1 :
+                worldmap_fx.play(fade_ms=3000)
                 screen.fill(BLACK)
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
@@ -831,6 +856,7 @@ class App():
                 screen.fill(BLACK)
                 self.reset()
                 page=1
+                worldmap_fx.fadeout(1000)
         if page==2:
             screen.fill(BLACK)
             screen.blit(level_bg,(0,0))
@@ -841,6 +867,7 @@ class App():
                     char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"Level {i}.png")
                     char_btn.draw_btn()
                     if char_btn.update():
+                        click_fx.play()
                         game_over=-1
                         page=3 
                         lst = os.listdir(xx) # your directory path
@@ -861,6 +888,7 @@ class App():
                     level_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,xx)
                     level_btn.draw_btn()
                     if level_btn.update():
+                        click_fx.play()
                         level=i
                         page=2 
                         self.change=False 
@@ -869,6 +897,7 @@ class App():
                 time.sleep(0.2)
 
         if page == 0 :
+            intro_fx.play()
             my_img = get_image('4.jpeg')
             my_img = pygame.transform.scale(my_img,(1000,1000))
             screen.blit(my_img,my_img.get_rect())
@@ -878,8 +907,11 @@ class App():
             settings_btn.draw_btn()
             if start_btn.update():
                 page=1
+                intro_fx.fadeout(0)
+                click_fx.play()
             if quit_btn.update():
                 pygame.quit()
+                click_fx.play()
             if settings_btn.update():
                 page=-1
         
