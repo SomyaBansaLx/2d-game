@@ -205,8 +205,10 @@ class Btn():
         else:
             self.click=False
         return self.click
-start_btn = Btn(250,350,500,300,'start_btn2.png')    
-
+    
+start_btn = Btn(250,350,400,200,'play.jpeg')    
+quit_btn = Btn(250,550,400,200,'quit.jpeg')
+settings_btn=Btn(800,900,100,100,'quit.jpeg')
 
 class moving_platform(pygame.sprite.Sprite):
 
@@ -816,8 +818,17 @@ class App():
             screen.blit(my_img,my_img.get_rect())
             
             start_btn.draw_btn()
+            quit_btn.draw_btn()
+            settings_btn.draw_btn()
             if start_btn.update():
                 page=1
+            if quit_btn.update():
+                pygame.quit()
+            if settings_btn.update():
+                page=-1
+        
+        if page==-1:
+            
         pygame.display.flip()
         clock.tick(30)
 
