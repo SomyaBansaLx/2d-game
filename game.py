@@ -863,6 +863,7 @@ class App():
         coin_group.empty()
         volt_group.empty()
         spike_group.empty()
+        people_group.empty()
         self.player.coins=0
     def on_execute(self):
         global y_scroll
