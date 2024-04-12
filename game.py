@@ -76,7 +76,7 @@ x_scroll=max_right
 game_over=0
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
-bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
+bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 # end_bg.set_colorkey(BLACK)
 def load_new(row,col):
@@ -91,7 +91,7 @@ def load_new(row,col):
     y_scroll=max_down
     x_scroll= 0
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-    bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
+    bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
     
 level_data=[{"rows":40,"cols":40,'x':50,'y':50},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
 
@@ -159,7 +159,7 @@ class World():
                     volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.jpg'))
                     volt_group.add(volt)
                 elif ele == 12:
-                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
+                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('bacteria-ball.png'))
                     spike_group.add(spik)
                 elif ele == 13:
                     my_img = get_image(random.choice(people_images))
@@ -360,7 +360,7 @@ class character():
         self.coin_img=pygame.transform.scale(coin_img,(tile_size,tile_size))
         self.collide_up=False
         self.collide_down=False
-        self.shot=False
+        self.shoot_ctr=0
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
@@ -403,7 +403,8 @@ class character():
             self.image = self.images_r[self.index]
         else:
             self.image = self.images_l[self.index]
-        if key[pygame.K_s] and self.sanitizer_bullet_count>0 and not self.shot:
+        if key[pygame.K_s] and self.sanitizer_bullet_count>0 and self.shoot_ctr==10:
+            self.shoot_ctr=0
             self.sanitizer_bullet_count -=1
             self.shot=True
             if self.direction_r==True :
@@ -412,7 +413,7 @@ class character():
                 bullet_dir = -1
             sanitizer_bullet_group.add(Sanitizerbullet(self.rect.x+50,self.rect.y+10,bullet_dir,5,20,20,20))
         else:
-            self.shot=False
+            self.shoot_ctr=min(10,self.shoot_ctr+1)
 
             
 
@@ -426,6 +427,8 @@ class character():
                 else:
                     left=True
             elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                if self.vel_y==0:
+                    up=True
                 if self.vel_y < 0:
                     dy = tile[1].bottom - self.rect.top
                     self.vel_y = 0
@@ -573,8 +576,8 @@ class spike(pygame.sprite.Sprite):
     def __init__(self,x,y,img):
         pygame.sprite.Sprite.__init__(self)
         self.image =img
-        # self.image.set_colorkey(WHITE)
-        self.size=(int(tile_size),int(tile_size))
+        self.image.set_colorkey(BLACK)
+        self.size=(int(1.5*tile_size),int(1.5*tile_size))
         self.image= pygame.transform.scale(self.image,self.size)
         self.orig_img=self.image
         self.rect=self.image.get_rect()
@@ -783,9 +786,9 @@ class App():
                 screen.fill(BLACK)
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
+                self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                self.player.draw_char(intermediate,world)
                 # self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
@@ -844,7 +847,7 @@ class App():
                         num = len(lst)-1
                         load(level)
                         self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx,num) 
-                        self.change=False 
+                        self.change=False
             else:
                 self.change=True  
                 time.sleep(0.2)
