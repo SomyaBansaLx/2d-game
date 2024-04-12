@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import pickle
 from os import path
-
+import random
 
 pygame.init()
 levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':40,'cols':20}]
@@ -36,6 +36,8 @@ lava_img = pygame.image.load('lava.png')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
 shooter_img = pygame.image.load('shooter.png')
+people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
+people_img = pygame.image.load(random.choice(people_images))
 shooter_left= pygame.transform.flip(shooter_img, True, False)
 ninja=pygame.transform.scale(pygame.image.load('ninja/attack/1.png'),(tile_size,tile_size))
 zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile_size))
@@ -44,6 +46,7 @@ coin_img= pygame.transform.scale(pygame.image.load('coin.png'),(tile_size,tile_s
 volts_img= pygame.transform.scale(pygame.image.load('volts.jpg'),(tile_size,tile_size))
 spike_img= pygame.transform.scale(pygame.image.load('spike.jpg'),(tile_size,tile_size))
 clicked = False
+people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 
 white = (255, 255, 255)
 green = (144, 201, 120)
@@ -130,7 +133,10 @@ def draw_world():
                 elif world_data[row][col] == 12:
                     img = pygame.transform.scale(spike_img, (tile_size, (tile_size)))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
-
+                elif  world_data[row][col] == 13:
+                    img = pygame.transform.scale(people_img,(50,100))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
+                    
 class Button():
     def __init__(self, x, y, image):
         self.image = image
@@ -204,12 +210,12 @@ while run:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 12:
+                    if world_data[y][x] > 13:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 12
+                        world_data[y][x] = 13
         elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
             pos = pygame.mouse.get_pos()
             x = (pos[0]+x_scroll) // tile_size

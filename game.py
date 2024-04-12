@@ -56,6 +56,9 @@ spike_group=pygame.sprite.Group()
 moving_platform_group = pygame.sprite.Group()
 my_hospital_group = pygame.sprite.Group()
 people_group = pygame.sprite.Group()
+bacteria_group = pygame.sprite.Group()
+sanitizer_gun_group =  pygame.sprite.Group()
+sanitizer_bullet_group =  pygame.sprite.Group()
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 # vertical_platform_group = pygame.sprite.Group()
 lasers=[]
@@ -159,19 +162,10 @@ class World():
                     spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('spike.jpg'))
                     spike_group.add(spik)
                 elif ele == 13:
-                    my_img = get_image(random(people_images))
-                    my_img = pygame.transform.scale(my_img,(50,50))
+                    my_img = get_image(random.choice(people_images))
+                    my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
-                # elif ele == 13:
-                #     x1 = col_pos*tile_size
-                #     img_rect = dirt_img.get_rect()
-                #     img_rect.x = tile_size*col_pos
-                #     img_rect.y = tile_size*row_pos
-                #     self.tile_list.append((dirt_img, img_rect))
-                # elif ele == 14:
-                #     x2 = col_pos*tile_size
-                #     my_platform  = moving_platform(x1,x2,row_pos*tile_size,2)
-                #     moving_platform_group.add(my_platform)                    
+
                     
                 col_pos += 1
             row_pos += 1
@@ -231,7 +225,9 @@ class moving_platform(pygame.sprite.Sprite):
     def draw_platform(self):
         screen.blit(self.image,self.rect)
 
-my_new_platform = moving_platform(100,400,600,1)
+my_new_platform = moving_platform(100,400,600,2)
+moving_platform_group.add(my_new_platform)
+my_new_platform = moving_platform(1200,1800,1050,2)
 moving_platform_group.add(my_new_platform)
 
 class vertical_platform(pygame.sprite.Sprite):
@@ -295,6 +291,7 @@ class Hospital(pygame.sprite.Sprite):
     def draw(self):
         screen.blit(self.image, self.rect)
 
+
 class People(pygame.sprite.Sprite):
 
     def __init__(self, x, y,img):
@@ -308,6 +305,47 @@ class People(pygame.sprite.Sprite):
     def draw(self):
         screen.blit(self.image, self.rect)
 
+class SanitizerGun(pygame.sprite.Sprite):
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('sanitizer_gun.jpeg'),(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.taken = 0
+        sanitizer_gun_group.add(self)
+
+    def draw(self, surface):
+            surface.blit(self.image, self.rect)
+
+my_gun = SanitizerGun(100,200)
+
+class Sanitizerbullet(pygame.sprite.Sprite) :
+
+    def __init__(self, x, y,is_right,move_speed,width,height,damage):
+        pygame.sprite.Sprite.__init__(self)
+        self.image= get_image('sanitizer_drop.jpeg')
+        self.image=pygame.transform.scale(self.image,(width,height))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.move_direction=is_right
+        self.rect.x = x+self.move_direction*tile_size
+        self.rect.y = y
+        self.move_speed= move_speed
+        self.damage = damage
+        
+    def update(self):
+        dx=self.move_direction*self.move_speed
+        for bacteria in bacteria_group:
+            if bacteria.rect.colliderect(self.rect.x + dx, self.rect.y, tile_size, tile_size):
+                bacteria.health-=self.damage
+                self.kill()
+        for tile in world.tile_list:
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, tile_size, tile_size):
+                self.kill()
+        self.rect.x+=dx 
+
 class character():
     def __init__(self, x, y,folder,len):
         self.images_r = []
@@ -319,6 +357,7 @@ class character():
         self.health_bar = Health_Bar(100)
         self.vaccine = 0
         self.vaccine_health = 0
+        self.sanitizer_bullet_count = 0 
         for i in range(1, len+1):
             img = pygame.transform.scale(get_image(f'{folder}/guy{i}.png'), (40, 80))
             img.set_colorkey(BLACK)
@@ -376,7 +415,15 @@ class character():
             self.image = self.images_r[self.index]
         else:
             self.image = self.images_l[self.index]
-            
+        if key[pygame.K_s] and self.sanitizer_bullet_count>0:
+            self.sanitizer_bullet_count -=1
+            if self.direction_r==True :
+                bullet_dir = 1
+            else :
+                bullet_dir = -1
+
+            sanitizer_bullet_group.add(Sanitizerbullet(self.rect.x+50,self.rect.y+10,bullet_dir,5,20,20,20))
+
         dy = self.vel_y
         self.vel_y = min(10, self.vel_y+1)
         for tile in world.tile_list:
@@ -411,18 +458,10 @@ class character():
                 self.vaccine = 1
                 self.vaccine_health = 200
 
-        # for moving_tile in vertical_platform_group:
-        #     if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-        #         dx = 0
-        #     if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-        #         if self.vel_y < 0:
-        #             dy = moving_tile.rect.y+tile_size - self.rect.top
-        #             self.vel_y = 0
-        #         elif self.vel_y >= 0:
-        #             dy = moving_tile.rect.y - self.rect.bottom
-        #             self.vel_y = 0
-        #             self.in_air=False
-        #             self.jumped=False
+        for guns in sanitizer_gun_group:
+            if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                sanitizer_gun_group.remove(guns)
+                self.sanitizer_bullet_count +=5
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
             self.health-=5
@@ -761,6 +800,11 @@ class App():
                 people_group.draw(intermediate)
                 my_hop = Hospital(400,540)
                 my_hospital_group.draw(intermediate)
+                sanitizer_gun_group.update(self.player)
+                sanitizer_gun_group.draw(intermediate)
+                sanitizer_bullet_group.update()
+                sanitizer_bullet_group.draw(intermediate)
+
                 # vertical_platform_group.update()
                 # vertical_platform_group.draw(intermediate)
 
