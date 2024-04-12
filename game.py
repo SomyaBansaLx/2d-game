@@ -828,7 +828,7 @@ class App():
                 page=-1
         
         if page==-1:
-            
+            pass
         pygame.display.flip()
         clock.tick(30)
 
