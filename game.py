@@ -377,6 +377,10 @@ class character():
         dx = 0
         dy = 0
         col_thresh=10
+        up=False
+        down=False
+        left=False
+        right=False
         if self.vaccine:
             self.vaccine_health -= 0.04
             if(self.vaccine_health<=0):
@@ -414,34 +418,47 @@ class character():
 
         dy = self.vel_y
         self.vel_y = min(10, self.vel_y+1)
-        for tile in world.tile_list:
+        for tile in world.tile_list:  
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
-            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                if(tile[1].x>self.rect.x):
+                    right=True
+                else:
+                    left=True
+            elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
                 if self.vel_y < 0:
                     dy = tile[1].bottom - self.rect.top
                     self.vel_y = 0
+                    up=True
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
+                    down=True
         
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
                 if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height):
                     dx=moving_tile.x_direction*moving_tile.x_speed
+                    if(moving_tile.x_direction==1):
+                        left=True
+                    else:
+                        right=True
             if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x>=moving_tile.rect.x + moving_tile.rect.width):
                 if moving_tile.rect.bottom<self.rect.y and self.rect.y+dy<moving_tile.rect.bottom:
                     dy=moving_tile.rect.bottom-self.rect.y
                     self.vel_y=0
+                    up=True
                 if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
-                    self.rect.bottom=moving_tile.rect.top-3
+                    self.rect.bottom=moving_tile.rect.top-2
                     dy=0
                     dx+=moving_tile.x_speed*moving_tile.x_direction
                     self.in_air=False
                     self.jumped=False
+                    down=True
+            
         
         for hosp in my_hospital_group:
             if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
@@ -477,7 +494,9 @@ class character():
         surface.blit(self.image, self.rect)
         if self.rect.x<0 or self.rect.y<0:
             game_over = 1
-
+        if (up and down)or(left and right):
+            game_over = 1
+            
     def draw(self):
         # pygame.draw.rect(screen,WHITE,self.rect,2)
         self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
@@ -493,7 +512,6 @@ class coins(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        
         
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
