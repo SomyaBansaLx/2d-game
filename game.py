@@ -77,6 +77,7 @@ game_over=0
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg.jpg'),(screen_width,screen_height))
+coin_img=get_image('coin.png')
 # end_bg.set_colorkey(BLACK)
 def load_new(row,col):
     global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
@@ -266,14 +267,14 @@ class Health_Bar():
         pygame.draw.rect(screen, BLACK, health_bar_rect_1)
         if self.infect==0 :
             health_bar_rect_2 = pygame.Rect(0,0, bar_width, 50)
-            pygame.draw.rect(intermediate, GREEN, health_bar_rect_2)
+            pygame.draw.rect(screen, GREEN, health_bar_rect_2)
         else :
             health_bar_rect_2 = pygame.Rect(0,0, bar_width, 50)
-            pygame.draw.rect(intermediate, RED, health_bar_rect_2)
+            pygame.draw.rect(screen, RED, health_bar_rect_2)
         
         if vaccine==1:
             health_bar_rect_3 = pygame.Rect(200,0, vaccine_health, 50)
-            pygame.draw.rect(intermediate, LIGHT_GREY, health_bar_rect_3)
+            pygame.draw.rect(screen, LIGHT_GREY, health_bar_rect_3)
 
 
 class Hospital(pygame.sprite.Sprite):
@@ -371,6 +372,10 @@ class character():
         self.vel_y = 0
         self.direction_r = True
         self.coins=0
+        self.font=pygame.font.Font(None,40)
+        self.coin_img=pygame.transform.scale(coin_img,(tile_size,tile_size))
+        self.collide_up=False
+        self.collide_down=False
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
@@ -391,7 +396,6 @@ class character():
             if(self.vaccine_health<=0):
                 self.vaccine = 0
 
-        self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
         if key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
             dx = -5
             self.counter += 1
@@ -432,12 +436,12 @@ class character():
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
-
+        
         for moving_tile in moving_platform_group:
-            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y-1, self.width, self.height):
                 dx = 0
             if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y < 0:
+                if self.vel_y < 0 :
                     dy = moving_tile.rect.y+tile_size - self.rect.top
                     self.vel_y = 0
                 elif self.vel_y >= 0:
@@ -445,6 +449,7 @@ class character():
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
+                
         
         for hosp in my_hospital_group:
             if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
@@ -481,14 +486,21 @@ class character():
         if self.rect.x<0 or self.rect.y<0:
             game_over = 1
 
+    def draw(self):
+        self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
+        text=self.font.render(str(self.coins),True,WHITE)
+        screen.blit(text,(220,20))
+        screen.blit(self.coin_img,(250,5))
+        
 class coins(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image =pygame.transform.scale(get_image('coin.png'),(tile_size,tile_size))
+        self.image =pygame.transform.scale(coin_img,(tile_size,tile_size))
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        
         
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -512,6 +524,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.move_counter *= -1
         else:
             pass
+
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
@@ -799,6 +812,7 @@ class App():
                     if self.draw_rect_angle(pygame.Rect(rot.x,rot.y,100,200),(rot.x,rot.y),rot.angle):
                         game_over=1
                 screen.blit(intermediate,(-x_scroll,-y_scroll))
+                self.player.draw()
             elif game_over==1:
                 screen.fill(BLACK)
                 self.reset()
