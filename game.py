@@ -236,6 +236,8 @@ my_new_platform = platform(1200,1800,1050,1050,2,0)
 moving_platform_group.add(my_new_platform)
 my_new_platform = platform(600,600,900,1300,0,2)
 moving_platform_group.add(my_new_platform)
+my_new_platform = platform(800,800,200,600,0,2)
+moving_platform_group.add(my_new_platform)
 
 class Health_Bar():
     def __init__(self,max_health):
@@ -428,21 +430,18 @@ class character():
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
-                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction, self.rect.y, self.width, self.height):
-                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
-            if moving_tile.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y<0 :
-                    dy = moving_tile.rect.bottom - self.rect.top
-                    self.vel_y = 0
-                elif self.vel_y>=0:
-                    if self.vel_y>0 :
-                        dy = moving_tile.rect.top - self.rect.bottom -1
-                        self.vel_y=0
-                        self.in_air=False
-                        self.jumped=False
-                    if moving_tile.x_speed !=0 :
-                        dx+=moving_tile.x_direction*moving_tile.x_speed
-                
+                if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height):
+                    dx=moving_tile.x_direction*moving_tile.x_speed
+            if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x>=moving_tile.rect.x + moving_tile.rect.width):
+                if moving_tile.rect.bottom<self.rect.y and self.rect.y+dy<moving_tile.rect.bottom:
+                    dy=moving_tile.rect.bottom-self.rect.y
+                    self.vel_y=0
+                if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
+                    self.rect.bottom=moving_tile.rect.top-3
+                    dy=0
+                    dx+=moving_tile.x_speed*moving_tile.x_direction
+                    self.in_air=False
+                    self.jumped=False
         
         for hosp in my_hospital_group:
             if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
@@ -480,6 +479,7 @@ class character():
             game_over = 1
 
     def draw(self):
+        # pygame.draw.rect(screen,WHITE,self.rect,2)
         self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
         text=self.font.render(str(self.coins),True,WHITE)
         screen.blit(text,(220,20))
@@ -765,6 +765,8 @@ class App():
                 screen.fill(BLACK)
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
+                moving_platform_group.update()
+                moving_platform_group.draw(intermediate)
                 self.player.draw_char(intermediate,world)
                 # self.draw_grid()
                 blob_group.update()
@@ -786,8 +788,6 @@ class App():
                 volt_group.update()
                 spike_group.draw(intermediate)
                 spike_group.update()
-                moving_platform_group.update()
-                moving_platform_group.draw(intermediate)
                 people_group.draw(intermediate)
                 my_hop = Hospital(400,540)
                 my_hospital_group.draw(intermediate)
