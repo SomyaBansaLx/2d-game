@@ -47,7 +47,13 @@ gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size
 coin_img= pygame.transform.scale(pygame.image.load('coin.png'),(tile_size,tile_size))
 volts_img= pygame.transform.scale(pygame.image.load('volts.jpg'),(tile_size,tile_size))
 spike_img= pygame.transform.scale(pygame.image.load('spike.jpg'),(tile_size,tile_size))
+sanitizer_gun_img=pygame.transform.scale(pygame.image.load('sanitizer_gun.jpeg'),(tile_size,tile_size))
+mask_img=pygame.transform.scale(pygame.image.load('mask.jpeg'),(tile_size,tile_size))
+hosp_img=pygame.transform.scale(pygame.image.load('hospital.jpeg'),(2*tile_size,2*tile_size))
+sanitizer_img=pygame.transform.scale(pygame.image.load('sanitizer.png'),(tile_size,tile_size))
+
 clicked = False
+click=False
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 
 white = (255, 255, 255)
@@ -141,6 +147,16 @@ def draw_world():
                 elif  world_data[row][col] == 14:
                     img = pygame.transform.scale(gayab_img,(tile_size,tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 15:
+                    img = pygame.transform.scale(sanitizer_gun_img,(tile_size,tile_size))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 16:
+                    img = pygame.transform.scale(mask_img,(tile_size,tile_size))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 17:
+                    intermediate.blit(sanitizer_img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 18:
+                    intermediate.blit(hosp_img, (col * tile_size, row * tile_size))
                     
 class Button():
     def __init__(self, x, y, image):
@@ -174,7 +190,7 @@ load_button = Button(500, screen_height - 80, load_img)
 #main game loop
 run = True
 while run:
-    
+    max_num=18
     clock.tick(fps)
     #draw background
     screen.fill(green)
@@ -205,6 +221,16 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         #mouseclicks to change tiles
+        if event.type == pygame.KEYDOWN and event.key==pygame.K_1 and click==False:
+            click=True
+            pos = pygame.mouse.get_pos()
+            x = (pos[0]+x_scroll) // tile_size
+            y = (pos[1]+y_scroll) // tile_size
+            #check that the coordinates are within the tile area
+            if x <levels[level-1]['cols'] and y <levels[level-1]['rows']:
+                world_data[y][x]=min(world_data[y][x]+10,max_num)
+        else:
+            click=False
         if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:
             clicked = True
             pos = pygame.mouse.get_pos()
@@ -215,12 +241,12 @@ while run:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 14:
+                    if world_data[y][x] > max_num:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 14
+                        world_data[y][x] = max_num
         elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
             pos = pygame.mouse.get_pos()
             x = (pos[0]+x_scroll) // tile_size

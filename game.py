@@ -49,6 +49,7 @@ level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_w
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
+hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
 
 #ALL COLORS
 WHITE = (255, 255, 255)
@@ -116,7 +117,7 @@ def load_new(row,col):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40,"cols":40,'x':50,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
+level_data=[{"rows":40,"cols":40,'x':50,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]},{"rows":60,'cols':20,'x':100,'y':2700},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
 
 class World():
     def __init__(self, data):
@@ -194,11 +195,17 @@ class World():
                     mov_tile+=1
                     moving_platform_group.add(platform(col_pos * tile_size,ele[0]*tile_size, row_pos * tile_size,ele[1]*tile_size,ele[2],ele[3]))
                 elif ele == 15:
-                    sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
-                    sanitizer_group.add(sanitize)
+                    sanitize=SanitizerGun(col_pos * tile_size, row_pos * tile_size)
+                    sanitizer_gun_group.add(sanitize)
                 elif ele == 16:
                     maskk=face_mask(col_pos * tile_size, row_pos * tile_size)
                     face_mask_group.add(maskk)
+                elif ele == 17:
+                    sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
+                    sanitizer_group.add(sanitize)
+                elif ele == 18:
+                    hosp=Hospital(col_pos * tile_size, row_pos * tile_size)
+                    my_hospital_group.add(hosp)
                     
                 col_pos += 1
             row_pos += 1
@@ -262,12 +269,6 @@ class platform(pygame.sprite.Sprite):
         if self.rect.bottom > self.y2  or self.rect.top < self.y1:
             self.y_direction *= -1
 
-# my_new_platform = platform(1200,1800,1050,1050,2,0)
-# moving_platform_group.add(my_new_platform)
-# my_new_platform = platform(600,600,900,1300,0,2)
-# moving_platform_group.add(my_new_platform)
-# my_new_platform = platform(800,800,200,600,0,2)
-# moving_platform_group.add(my_new_platform)
 
 class Health_Bar():
     def __init__(self,max_health):
@@ -314,21 +315,15 @@ class sanitizer(pygame.sprite.Sprite):
         self.rect.y = y
         sanitizer_group.add(self)
 
-    def draw(self):
-        screen.blit(self.image, self.rect)
 
 class Hospital(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image("hospital.jpeg"),(100,100))  # Load hospital image
+        self.image = hosp_img
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         my_hospital_group.add(self)
-
-    def draw(self):
-        screen.blit(self.image, self.rect)
-
 
 class People(pygame.sprite.Sprite):
 
@@ -354,7 +349,6 @@ class SanitizerGun(pygame.sprite.Sprite):
         self.taken = 0
         sanitizer_gun_group.add(self)
 
-my_gun = SanitizerGun(100,200)
 
 class Sanitizerbullet(pygame.sprite.Sprite) :
 
@@ -437,8 +431,8 @@ class character():
         left=False
         right=False
         if self.vaccine:
-            self.vaccine_health -= 0.04
-            if(self.vaccine_health<=0):
+            self.vaccine_health -= 0.1
+            if(self.vaccine_health<0):
                 self.vaccine = 0
 
         if key[pygame.K_LEFT] and not key[pygame.K_RIGHT]:
@@ -539,13 +533,15 @@ class character():
                 sanitizer_group.remove(sanit)
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
-            if self.mask_immunity==0:
+            if self.mask_immunity==0 and self.vaccine==0:
                 self.health-=5
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
             coin_fx.play()
-        if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
-            if self.mask_immunity==0:
+        if pygame.sprite.spritecollide(self,volt_group,False):
+            self.health-=5
+        if pygame.sprite.spritecollide(self,spike_group,False):
+            if self.mask_immunity==0 and self.vaccine==0:
                 self.health-=5
         
         if self.mask_protection_time>0 :
@@ -745,7 +741,6 @@ class rotator(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.orig, angle)
         self.rect = self.image.get_rect(center = rotated_image_center)
 
-    #   pygame.draw.rect(surf, (255, 0, 0), (*rotated_image_rect.topleft, *rotated_image.get_size()),2)
     def update(self):
         self.counter+=1
         if self.counter==self.speed:
@@ -890,7 +885,6 @@ class App():
                 spike_group.draw(intermediate)
                 spike_group.update()
                 people_group.draw(intermediate)
-                my_hop = Hospital(400,540)
                 my_hospital_group.draw(intermediate)
                 sanitizer_gun_group.update(self.player)
                 sanitizer_gun_group.draw(intermediate)
@@ -991,8 +985,10 @@ class App():
         people_group.empty()
         sanitizer_gun_group.empty()
         sanitizer_bullet_group.empty()
-
+        face_mask_group.empty()
+        moving_platform_group.empty()
         self.player.coins=0
+        
     def on_execute(self):
         global y_scroll
         if self.on_init() == False:
