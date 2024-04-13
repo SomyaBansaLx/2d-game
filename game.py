@@ -102,6 +102,11 @@ click_fx=pygame.mixer.Sound('click.mp3')
 click_fx.set_volume(0.5)
 pickup_fx=pygame.mixer.Sound('pickup.wav')
 pickup_fx.set_volume(0.5)
+shot_fx=pygame.mixer.Sound('shot.wav')
+shot_fx.set_volume(0.5)
+shock_fx=pygame.mixer.Sound('shock.wav')
+shock_fx.set_volume(0.5)
+
 
 def load_new(row,col):
     global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
@@ -458,6 +463,7 @@ class character():
         else:
             self.image = self.images_l[self.index]
         if key[pygame.K_s] and self.sanitizer_bullet_count>0 and self.shoot_ctr==10:
+            shot_fx.play()
             self.shoot_ctr=0
             self.sanitizer_bullet_count -=1
             self.shot=True
@@ -548,6 +554,7 @@ class character():
             coin_fx.play()
         if pygame.sprite.spritecollide(self,volt_group,False):
             self.health-=5
+            shock_fx.play()
         if pygame.sprite.spritecollide(self,spike_group,False):
             if self.mask_immunity==0 and self.vaccine==0:
                 self.health-=5
