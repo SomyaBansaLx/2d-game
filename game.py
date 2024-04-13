@@ -190,15 +190,15 @@ class World():
                     my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
                 elif ele == 14:
-                    maskk=face_mask(col_pos * tile_size, row_pos * tile_size)
-                    face_mask_group.add(maskk)
-                elif ele == 15:
-                    sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
-                    sanitizer_group.add(sanitize)
-                elif ele == 14:
                     ele=level_data[level-1]['mov_tile'][mov_tile]
                     mov_tile+=1
                     moving_platform_group.add(platform(col_pos * tile_size,ele[0]*tile_size, row_pos * tile_size,ele[1]*tile_size,ele[2],ele[3]))
+                elif ele == 15:
+                    sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
+                    sanitizer_group.add(sanitize)
+                elif ele == 16:
+                    maskk=face_mask(col_pos * tile_size, row_pos * tile_size)
+                    face_mask_group.add(maskk)
                     
                 col_pos += 1
             row_pos += 1
