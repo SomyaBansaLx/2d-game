@@ -36,6 +36,8 @@ lava_img = pygame.image.load('lava.png')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
 shooter_img = pygame.image.load('shooter.png')
+mask_img = pygame.image.load('mask.jpeg')
+sanitizer_img = pygame.image.load('sanitizer.png')
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 people_img = pygame.image.load(random.choice(people_images))
 shooter_left= pygame.transform.flip(shooter_img, True, False)
@@ -136,6 +138,12 @@ def draw_world():
                 elif  world_data[row][col] == 13:
                     img = pygame.transform.scale(people_img,(50,100))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 14:
+                    img = pygame.transform.scale(mask_img,(50,50))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 15:
+                    img = pygame.transform.scale(sanitizer_img,(50,50))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
                     
 class Button():
     def __init__(self, x, y, image):
@@ -210,12 +218,12 @@ while run:
                 #update tile value
                 if pygame.mouse.get_pressed()[0] == 1:
                     world_data[y][x] += 1
-                    if world_data[y][x] > 13:
+                    if world_data[y][x] > 15:
                         world_data[y][x] = 0
                 elif pygame.mouse.get_pressed()[2] == 1:
                     world_data[y][x] -= 1
                     if world_data[y][x] < 0:
-                        world_data[y][x] = 13
+                        world_data[y][x] = 15
         elif event.type==pygame.KEYDOWN and event.key==pygame.K_SPACE:
             pos = pygame.mouse.get_pos()
             x = (pos[0]+x_scroll) // tile_size

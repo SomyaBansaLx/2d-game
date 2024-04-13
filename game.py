@@ -57,8 +57,10 @@ moving_platform_group = pygame.sprite.Group()
 my_hospital_group = pygame.sprite.Group()
 people_group = pygame.sprite.Group()
 bacteria_group = pygame.sprite.Group()
+sanitizer_group =  pygame.sprite.Group()
 sanitizer_gun_group =  pygame.sprite.Group()
 sanitizer_bullet_group =  pygame.sprite.Group()
+face_mask_group = pygame.sprite.Group()
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 # vertical_platform_group = pygame.sprite.Group()
 lasers=[]
@@ -166,6 +168,12 @@ class World():
                     my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
                 elif ele == 14:
+                    maskk=face_mask(col_pos * tile_size, row_pos * tile_size)
+                    face_mask_group.add(maskk)
+                elif ele == 15:
+                    sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
+                    sanitizer_group.add(sanitize)
+                elif ele == 14:
                     pass
                     
                 col_pos += 1
@@ -263,6 +271,29 @@ class Health_Bar():
             health_bar_rect_3 = pygame.Rect(200,0, vaccine_health, 50)
             pygame.draw.rect(screen, LIGHT_GREY, health_bar_rect_3)
 
+class face_mask(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(pygame.transform.flip(get_image('mask.jpeg'),True,False),(50,50))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        face_mask_group.add(self)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class sanitizer(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('sanitizer.png'),(50,50))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        sanitizer_group.add(self)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
 
 class Hospital(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -361,6 +392,8 @@ class character():
         self.collide_up=False
         self.collide_down=False
         self.shoot_ctr=0
+        self.mask_protection_time = 0
+        self.mask_immunity = 0
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
@@ -472,14 +505,29 @@ class character():
             if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 sanitizer_gun_group.remove(guns)
                 self.sanitizer_bullet_count +=5
+        for mask in face_mask_group:
+            if mask.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                self.mask_protection_time+=100
+                face_mask_group.remove(mask)
+        for sanit in sanitizer_group:
+            if sanit.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                # self.mask_protection_time+=100
+                sanitizer_group.remove(sanit)
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
-            self.health-=5
+            if self.mask_immunity==0:
+                self.health-=5
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
         if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
-            self.health-=5
-
+            if self.mask_immunity==0:
+                self.health-=5
+        
+        if self.mask_protection_time>0 :
+            self.mask_protection_time -= 0.2
+            self.mask_immunity = 1
+        else :
+            self.mask_immunity = 0
         if self.health==0:
             game_over = 1
             
@@ -816,6 +864,7 @@ class App():
                 sanitizer_gun_group.draw(intermediate)
                 sanitizer_bullet_group.update()
                 sanitizer_bullet_group.draw(intermediate)
+                face_mask_group.draw(intermediate)
 
                 # vertical_platform_group.update()
                 # vertical_platform_group.draw(intermediate)
@@ -882,7 +931,7 @@ class App():
                 pygame.quit()
             if settings_btn.update():
                 page=-1
-        
+                
         if page==-1:
             pass
         pygame.display.flip()
@@ -903,6 +952,7 @@ class App():
         people_group.empty()
         sanitizer_gun_group.empty()
         sanitizer_bullet_group.empty()
+
         self.player.coins=0
     def on_execute(self):
         global y_scroll
