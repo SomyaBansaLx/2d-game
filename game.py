@@ -114,13 +114,14 @@ def load_new(row,col):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40,"cols":40,'x':50,'y':50},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
+level_data=[{"rows":40,"cols":40,'x':50,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
 
 class World():
     def __init__(self, data):
         global dirt_tile,grass_tile
         load_new(level_data[level-1]["rows"],level_data[level-1]['cols'])
         tile_num=0
+        mov_tile=0
         self.tile_list = []
         dirt_img = pygame.transform.scale(
             get_image('brown_wood.png'), (tile_size, tile_size))
@@ -187,7 +188,9 @@ class World():
                     my_img = pygame.transform.scale(my_img,(50,100))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
                 elif ele == 14:
-                    pass
+                    ele=level_data[level-1]['mov_tile'][mov_tile]
+                    mov_tile+=1
+                    moving_platform_group.add(platform(col_pos * tile_size,ele[0]*tile_size, row_pos * tile_size,ele[1]*tile_size,ele[2],ele[3]))
                     
                 col_pos += 1
             row_pos += 1
@@ -251,14 +254,12 @@ class platform(pygame.sprite.Sprite):
         if self.rect.bottom > self.y2  or self.rect.top < self.y1:
             self.y_direction *= -1
 
-my_new_platform =platform(100,400,600,600,2,0)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(1200,1800,1050,1050,2,0)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(600,600,900,1300,0,2)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(800,800,200,600,0,2)
-moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(1200,1800,1050,1050,2,0)
+# moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(600,600,900,1300,0,2)
+# moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(800,800,200,600,0,2)
+# moving_platform_group.add(my_new_platform)
 
 class Health_Bar():
     def __init__(self,max_health):
@@ -791,12 +792,17 @@ class App():
         self.running = True 
 
     def draw_grid(self):
+        font=pygame.font.Font(None,30)
         for i in range(cols):
             pygame.draw.line(intermediate, WHITE, (
                 0+i*tile_size, 0), (0+i*tile_size,screen_height))
+            text=font.render(str(i),True,WHITE)
+            intermediate.blit(text,pygame.Rect(0+i*tile_size,0,20,20))
         for i in range(rows):
             pygame.draw.line(intermediate, WHITE, (
                 0, 0+i*tile_size), (screen_width, 0+i*tile_size))
+            text=font.render(str(i),True,WHITE)
+            intermediate.blit(text,pygame.Rect(0, 0+i*tile_size,20,20))
     def draw_rect_angle(self,rect, pivot, angle):
         pts = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]
         pts = [(pygame.math.Vector2(p) - pivot).rotate(-angle) + pivot for p in pts]
@@ -815,7 +821,7 @@ class App():
                 self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                # self.draw_grid()
+                self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
                 shooter_group.update()
