@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from pygame import mixer
 import pickle
 from os import path
 import os
@@ -7,8 +8,33 @@ import time
 import random
 
 from pygame.sprite import Group
+pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
+mixer.init()
 
+#ALL VARS
+page  = 0
+dirt_tile=None
+grass_tile=None
+tile_size = 50
+rows=40
+cols=20
+lasers=[]
+world=None
+clock = pygame.time.Clock()
+level=1
+screen_width=cols*tile_size
+screen_height=rows*tile_size
+screen=pygame.display.set_mode((1000,1000))
+intermediate=pygame.surface.Surface((screen_width,screen_height))
+max_down=screen_height-1000
+y_scroll=max_down
+max_right=screen_width-1000
+x_scroll=max_right
+game_over=0
+people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
+
+#load images
 _image_library = {}
 def get_image(path):
     global _image_library
@@ -18,6 +44,13 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path).convert()
         _image_library[path] = image
     return image
+
+level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
+end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
+coin_img=get_image('coin.png')
+
+#ALL COLORS
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 LIGHT_BLACK = (80, 80, 80)
@@ -37,12 +70,7 @@ LIGHT_BROWN = (196, 164, 132)
 BROWN = (111, 78, 55)
 SHADOW_BROWN = (111, 70, 40)
 
-page  = 0
-dirt_tile=None
-grass_tile=None
-tile_size = 50
-rows=40
-cols=20
+#ALL GROUPS
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
@@ -61,26 +89,19 @@ sanitizer_group =  pygame.sprite.Group()
 sanitizer_gun_group =  pygame.sprite.Group()
 sanitizer_bullet_group =  pygame.sprite.Group()
 face_mask_group = pygame.sprite.Group()
-people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
-# vertical_platform_group = pygame.sprite.Group()
-lasers=[]
-world=None
-clock = pygame.time.Clock()
-level=1
-screen_width=cols*tile_size
-screen_height=rows*tile_size
-screen=pygame.display.set_mode((1000,1000))
-intermediate=pygame.surface.Surface((screen_width,screen_height))
-max_down=screen_height-1000
-y_scroll=max_down
-max_right=screen_width-1000
-x_scroll=max_right
-game_over=0
-level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
-bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
-coin_img=get_image('coin.png')
-# end_bg.set_colorkey(BLACK)
+
+#ADD MUSIC
+coin_fx=pygame.mixer.Sound('coin.wav')
+coin_fx.set_volume(0.5)
+jump_fx=pygame.mixer.Sound('jump.wav')
+jump_fx.set_volume(0.5)
+intro_fx=pygame.mixer.Sound('intro.mp3')
+intro_fx.set_volume(0.1)
+worldmap_fx=pygame.mixer.Sound('worldmap.mp3')
+worldmap_fx.set_volume(0.5)
+click_fx=pygame.mixer.Sound('click.mp3')
+click_fx.set_volume(0.5)
+
 def load_new(row,col):
     global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
     rows=row
@@ -95,13 +116,14 @@ def load_new(row,col):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
     
-level_data=[{"rows":40,"cols":40,'x':50,'y':50},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
+level_data=[{"rows":40,"cols":40,'x':50,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]},{"rows":40,'cols':20,'x':50,'y':1800},{"rows":60,'cols':20,'x':50,'y':2800},{"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
 
 class World():
     def __init__(self, data):
         global dirt_tile,grass_tile
         load_new(level_data[level-1]["rows"],level_data[level-1]['cols'])
         tile_num=0
+        mov_tile=0
         self.tile_list = []
         dirt_img = pygame.transform.scale(
             get_image('brown_wood.png'), (tile_size, tile_size))
@@ -174,7 +196,9 @@ class World():
                     sanitize=sanitizer(col_pos * tile_size, row_pos * tile_size)
                     sanitizer_group.add(sanitize)
                 elif ele == 14:
-                    pass
+                    ele=level_data[level-1]['mov_tile'][mov_tile]
+                    mov_tile+=1
+                    moving_platform_group.add(platform(col_pos * tile_size,ele[0]*tile_size, row_pos * tile_size,ele[1]*tile_size,ele[2],ele[3]))
                     
                 col_pos += 1
             row_pos += 1
@@ -211,7 +235,7 @@ class Btn():
     
 start_btn = Btn(250,350,400,200,'play.jpeg')    
 quit_btn = Btn(250,550,400,200,'quit.jpeg')
-settings_btn=Btn(800,900,100,100,'quit.jpeg')
+settings_btn=Btn(800,900,100,100,'settings.jpeg')
 
 class platform(pygame.sprite.Sprite):
 
@@ -238,14 +262,12 @@ class platform(pygame.sprite.Sprite):
         if self.rect.bottom > self.y2  or self.rect.top < self.y1:
             self.y_direction *= -1
 
-my_new_platform =platform(100,400,600,600,2,0)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(1200,1800,1050,1050,2,0)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(600,600,900,1300,0,2)
-moving_platform_group.add(my_new_platform)
-my_new_platform = platform(800,800,200,600,0,2)
-moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(1200,1800,1050,1050,2,0)
+# moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(600,600,900,1300,0,2)
+# moving_platform_group.add(my_new_platform)
+# my_new_platform = platform(800,800,200,600,0,2)
+# moving_platform_group.add(my_new_platform)
 
 class Health_Bar():
     def __init__(self,max_health):
@@ -360,7 +382,7 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.rect.x+=dx 
 
 class character():
-    def __init__(self, x, y,folder,len):
+    def __init__(self, x, y,file,imgs):
         self.images_r = []
         self.images_l = []
         self.index = 0
@@ -371,9 +393,9 @@ class character():
         self.vaccine = 0
         self.vaccine_health = 0
         self.sanitizer_bullet_count = 0 
-        for i in range(1, len+1):
-            img = pygame.transform.scale(get_image(f'{folder}/guy{i}.png'), (40, 80))
-            img.set_colorkey(BLACK)
+        for i in range(0, len(imgs)):
+            img = pygame.transform.scale(get_image(file+imgs[i]), (40, 80))
+            # img.set_colorkey(BLACK)
             img_flip = pygame.transform.flip(img, True, False)
             self.images_r.append(img)
             self.images_l.append(img_flip)
@@ -455,24 +477,23 @@ class character():
         for tile in world.tile_list:  
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
-                if(tile[1].x>self.rect.x):
-                    right=True
-                else:
-                    left=True
             elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y==0:
-                    up=True
                 if self.vel_y < 0:
                     dy = tile[1].bottom - self.rect.top
                     self.vel_y = 0
-                    up=True
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
                     self.vel_y = 0
                     self.in_air=False
                     self.jumped=False
-                    down=True
-        
+            if abs(tile[1].x-self.rect.x-self.rect.width)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                right=True
+            if abs(tile[1].x+tile[1].width-self.rect.x)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                left=True
+            if abs(tile[1].bottom-self.rect.y)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                up=True
+            if abs(tile[1].y-self.rect.bottom)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                down=True
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
@@ -482,14 +503,17 @@ class character():
                         left=True
                     else:
                         right=True
-            if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x>=moving_tile.rect.x + moving_tile.rect.width):
-                if moving_tile.rect.bottom<self.rect.y and self.rect.y+dy<moving_tile.rect.bottom:
+            if not (self.rect.x+self.rect.width < moving_tile.rect.x or self.rect.x>moving_tile.rect.x + moving_tile.rect.width):
+                if moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed-self.rect.y<2 and self.rect.y+dy<=moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed:
                     dy=moving_tile.rect.bottom-self.rect.y
                     self.vel_y=0
                     up=True
                 if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
                     self.rect.bottom=moving_tile.rect.top-2
-                    dy=0
+                    if(moving_tile.y_direction==-1):
+                        dy=-moving_tile.y_speed
+                    else:
+                        dy=0
                     dx+=moving_tile.x_speed*moving_tile.x_direction
                     self.in_air=False
                     self.jumped=False
@@ -519,6 +543,7 @@ class character():
                 self.health-=5
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
+            coin_fx.play()
         if pygame.sprite.spritecollide(self,volt_group,False) or pygame.sprite.spritecollide(self,spike_group,False):
             if self.mask_immunity==0:
                 self.health-=5
@@ -625,7 +650,7 @@ class spike(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image =img
         self.image.set_colorkey(BLACK)
-        self.size=(int(1.5*tile_size),int(1.5*tile_size))
+        self.size=(int(1.2*tile_size),int(1.2*tile_size))
         self.image= pygame.transform.scale(self.image,self.size)
         self.orig_img=self.image
         self.rect=self.image.get_rect()
@@ -640,6 +665,7 @@ class spike(pygame.sprite.Sprite):
         self.image=pygame.transform.scale(self.image,self.size)
         new_rect=self.image.get_rect()
         new_rect.topleft=self.rect.topleft
+        
 class Ninja(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -803,7 +829,7 @@ class laser(pygame.sprite.Sprite):
         if self.move_counter==self.move_speed:
             self.rect.y-=self.move_direction*3
             self.move_counter=0
-                          
+                        
 class App():
     def __init__(self):
         self.running = True
@@ -814,12 +840,17 @@ class App():
         self.running = True 
 
     def draw_grid(self):
+        font=pygame.font.Font(None,30)
         for i in range(cols):
             pygame.draw.line(intermediate, WHITE, (
                 0+i*tile_size, 0), (0+i*tile_size,screen_height))
+            text=font.render(str(i),True,WHITE)
+            intermediate.blit(text,pygame.Rect(0+i*tile_size,0,20,20))
         for i in range(rows):
             pygame.draw.line(intermediate, WHITE, (
                 0, 0+i*tile_size), (screen_width, 0+i*tile_size))
+            text=font.render(str(i),True,WHITE)
+            intermediate.blit(text,pygame.Rect(0, 0+i*tile_size,20,20))
     def draw_rect_angle(self,rect, pivot, angle):
         pts = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]
         pts = [(pygame.math.Vector2(p) - pivot).rotate(-angle) + pivot for p in pts]
@@ -831,13 +862,14 @@ class App():
         global page,game_over,level
         if page == 3 :
             if game_over==-1 :
+                worldmap_fx.play(fade_ms=3000)
                 screen.fill(BLACK)
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                # self.draw_grid()
+                self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
                 shooter_group.update()
@@ -880,22 +912,25 @@ class App():
                 screen.fill(BLACK)
                 self.reset()
                 page=1
+                worldmap_fx.fadeout(1000)
         if page==2:
             screen.fill(BLACK)
             screen.blit(level_bg,(0,0))
             if self.change:
-                for i in range (1,3) :
+                for i in range (1,5) :
                     xx = f"char{i}"
                     screen.blit(pygame.transform.scale(get_image(xx+"/guy1.png"),(300,300)),pygame.Rect(((i-1)%2)*500+100,100+500*int((i-1)/2),300,300))
                     char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"Level {i}.png")
                     char_btn.draw_btn()
                     if char_btn.update():
+                        click_fx.play()
                         game_over=-1
                         page=3 
-                        lst = os.listdir(xx) # your directory path
-                        num = len(lst)-1
+                        lst = os.listdir(xx)
+                        print(lst)
+                        lst.pop(lst.index("guy1.png"))
                         load(level)
-                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx,num) 
+                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,xx+'/',lst) 
                         self.change=False
             else:
                 self.change=True  
@@ -910,6 +945,7 @@ class App():
                     level_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,xx)
                     level_btn.draw_btn()
                     if level_btn.update():
+                        click_fx.play()
                         level=i
                         page=2 
                         self.change=False 
@@ -918,6 +954,7 @@ class App():
                 time.sleep(0.2)
 
         if page == 0 :
+            intro_fx.play()
             my_img = get_image('4.jpeg')
             my_img = pygame.transform.scale(my_img,(1000,1000))
             screen.blit(my_img,my_img.get_rect())
@@ -927,11 +964,13 @@ class App():
             settings_btn.draw_btn()
             if start_btn.update():
                 page=1
+                intro_fx.fadeout(0)
+                click_fx.play()
             if quit_btn.update():
                 pygame.quit()
             if settings_btn.update():
                 page=-1
-                
+        
         if page==-1:
             pass
         pygame.display.flip()
