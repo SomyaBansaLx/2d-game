@@ -6,7 +6,7 @@ import random
 
 pygame.init()
 levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':40,'cols':20}]
-level = 1
+level = 3
 main_page  = 0 
 clock = pygame.time.Clock()
 fps = 60
@@ -35,6 +35,7 @@ blob_img = pygame.image.load('blob.png')
 lava_img = pygame.image.load('lava.png')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
+bacteria_img =  pygame.image.load('bacteria.jpeg')
 shooter_img = pygame.image.load('shooter.png')
 mask_img = pygame.image.load('mask.jpeg')
 sanitizer_img = pygame.image.load('sanitizer.png')
@@ -157,6 +158,9 @@ def draw_world():
                     intermediate.blit(sanitizer_img, (col * tile_size, row * tile_size))
                 elif  world_data[row][col] == 18:
                     intermediate.blit(hosp_img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 19:
+                    img = pygame.transform.scale(bacteria_img,(tile_size,tile_size))
+                    intermediate.blit(img, (col * tile_size, row * tile_size))
                     
 class Button():
     def __init__(self, x, y, image):
@@ -190,7 +194,7 @@ load_button = Button(500, screen_height - 80, load_img)
 #main game loop
 run = True
 while run:
-    max_num=18
+    max_num=19
     clock.tick(fps)
     #draw background
     screen.fill(green)
@@ -228,7 +232,7 @@ while run:
             y = (pos[1]+y_scroll) // tile_size
             #check that the coordinates are within the tile area
             if x <levels[level-1]['cols'] and y <levels[level-1]['rows']:
-                world_data[y][x]=min(world_data[y][x]+10,max_num)
+                world_data[y][x]=min(world_data[y][x]+10,max_num) 
         else:
             click=False
         if event.type == pygame.MOUSEBUTTONDOWN and clicked == False:

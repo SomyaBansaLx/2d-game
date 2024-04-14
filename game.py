@@ -1,5 +1,6 @@
 import pygame
 from math import sqrt
+import math
 from pygame.locals import *
 from pygame import mixer
 import pickle
@@ -233,6 +234,10 @@ class World():
                 elif ele == 18:
                     hosp=Hospital(col_pos * tile_size, row_pos * tile_size)
                     my_hospital_group.add(hosp)
+                elif ele == 19:
+                    bact=Bacteria(col_pos * tile_size, row_pos * tile_size,80,20,4)
+                    bacteria_group.add(bact)
+                
                     
                 col_pos += 1
             row_pos += 1
@@ -262,9 +267,9 @@ class Btn():
         if key[0] and not self.click:
             self.click=True
             x,y = pygame.mouse.get_pos()
-            print('comes')
+            # print('comes')
             if self.image_rect.collidepoint(x,y):
-                print('does')
+                # print('does')
                 return True
         elif not key[0]:
             self.click=False
@@ -464,22 +469,67 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.image=pygame.transform.scale(self.image,(width,height))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
-        self.move_direction=is_right
-        self.rect.x = x+self.move_direction*tile_size
+        self.rect.x = x
         self.rect.y = y
         self.move_speed= move_speed
         self.damage = damage
-        
+        self.direction = None
+        self.direction_x = 0 
+        self.direction_y = 0 
+        self.calc_direction()
+
+    def calc_direction(self):
+        mouse_pos = pygame.mouse.get_pos()
+
+        dx, dy = mouse_pos[0] - self.rect.x, mouse_pos[1] - self.rect.y
+        dist = math.hypot(dx, dy)
+        dx, dy = dx / dist, dy / dist 
+        self.direction_x = dx
+        self.direction_y = dy
+        self.direction = 0
     def update(self):
-        dx=self.move_direction*self.move_speed
-        for bacteria in bacteria_group:
-            if bacteria.rect.colliderect(self.rect.x + dx, self.rect.y, tile_size, tile_size):
-                bacteria.health-=self.damage
-                self.kill()
-        for tile in world.tile_list:
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, tile_size, tile_size):
-                self.kill()
-        self.rect.x+=dx 
+
+        if self.direction is not None:
+            self.rect.x += self.direction_x * self.move_speed
+            self.rect.y += self.direction_y * self.move_speed
+
+            for tile in world.tile_list:
+                if tile[1].colliderect(self.rect):
+                    self.kill() 
+
+            for bacter in bacteria_group:
+                if self.rect.colliderect(bacter.rect):
+                    bacter.health -= self.damage
+                    self.kill() 
+
+class Bacteria(pygame.sprite.Sprite):
+    def __init__(self,x,y,health,distance,speed):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('bacteria.jpeg'),(50,50))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.distance = distance
+        self.speed = speed
+        self.health = health
+        self.counter = 0 
+        self.move = False
+
+    def update(self, player):
+
+        if abs(self.rect.y-player.rect.y)<=100 and abs(self.rect.x-player.rect.x)<=200:
+            self.move = True
+        if self.move:
+            dx, dy = player.rect.x - self.rect.x, player.rect.y - self.rect.y
+            dist = math.hypot(dx, dy)
+            dx, dy = dx / dist, dy / dist 
+            self.rect.x += dx * self.speed
+            self.rect.y += dy * self.speed
+        if self.health<=0:
+            self.kill()
+
+    def draw(self):
+        screen.blit(self.image,self.rect)
 
 class character():
     def __init__(self, x, y,file,imgs):
@@ -570,7 +620,7 @@ class character():
                 bullet_dir = 1
             else :
                 bullet_dir = -1
-            sanitizer_bullet_group.add(Sanitizerbullet(self.rect.x+50,self.rect.y+10,bullet_dir,5,20,20,20))
+            sanitizer_bullet_group.add(Sanitizerbullet(self.rect.x,self.rect.y+40,bullet_dir,5,20,20,20))
         else:
             self.shoot_ctr=min(10,self.shoot_ctr+1)
 
@@ -633,7 +683,7 @@ class character():
             if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
                 pickup_fx.play()
                 sanitizer_gun_group.remove(guns)
-                self.sanitizer_bullet_count +=5
+                self.sanitizer_bullet_count +=40
         for mask in face_mask_group:
             if mask.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
                 pickup_fx.play()
@@ -644,6 +694,10 @@ class character():
                 pickup_fx.play()
                 # self.mask_protection_time+=100
                 sanitizer_group.remove(sanit)
+        for monster in bacteria_group:
+            if monster.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                bacteria_group.remove(monster)
+                self.health -= 20
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
             if self.mask_immunity==0 and self.vaccine==0:
@@ -987,6 +1041,9 @@ class App():
         global page,game_over,level
         if page == 3 :
             if game_over==-1 :
+                key = pygame.key.get_pressed()
+                if key[pygame.K_ESCAPE]:
+                    page = 1
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
@@ -1019,6 +1076,8 @@ class App():
                 sanitizer_bullet_group.update()
                 sanitizer_bullet_group.draw(intermediate)
                 face_mask_group.draw(intermediate)
+                bacteria_group.update(self.player)
+                bacteria_group.draw(intermediate)
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
