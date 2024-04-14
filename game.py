@@ -1,4 +1,5 @@
 import pygame
+from math import sqrt
 from pygame.locals import *
 from pygame import mixer
 import pickle
@@ -6,13 +7,34 @@ from os import path
 import os
 import time
 import random
-
 from pygame.sprite import Group
+
 pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
 mixer.init()
 
+#ALL COLORS
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+LIGHT_BLACK = (80, 80, 80)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE_GRAY = (102, 153, 204)
+LIGHT_PURPLE = (204, 204, 255)
+VLIGHT_GREY = (220, 220, 220)
+LIGHT_GREY = (211, 211, 211)
+SILVER = (192, 192, 192)
+GREY = (128, 128, 128)
+YELLOW = (255,255,0)
+MUSTARD = (255, 191, 0)
+LIGHT_BROWN = (196, 164, 132)
+BROWN = (111, 78, 55)
+SHADOW_BROWN = (111, 70, 40)
+
 #ALL VARS
+to_right=False
+to_left=False
 page  = 0
 dirt_tile=None
 grass_tile=None
@@ -33,7 +55,11 @@ max_right=screen_width-1000
 x_scroll=max_right
 game_over=0
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
-
+settings_font=pygame.font.SysFont('arial',70)
+settings_font.set_bold(True)
+settings_head=settings_font.render("SETTINGS",True,BLACK)
+settings_head_rect=settings_head.get_rect()
+settings_head_rect.center=(500,100)
 #load images
 _image_library = {}
 def get_image(path):
@@ -50,26 +76,7 @@ end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
-
-#ALL COLORS
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-LIGHT_BLACK = (80, 80, 80)
-BLUE = (0, 0, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-BLUE_GRAY = (102, 153, 204)
-LIGHT_PURPLE = (204, 204, 255)
-VLIGHT_GREY = (220, 220, 220)
-LIGHT_GREY = (211, 211, 211)
-SILVER = (192, 192, 192)
-GREY = (128, 128, 128)
-GOLD_YELLOW = (255, 234, 0)
-GOLD = (255, 215, 0)
-MUSTARD = (255, 191, 0)
-LIGHT_BROWN = (196, 164, 132)
-BROWN = (111, 78, 55)
-SHADOW_BROWN = (111, 70, 40)
+settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
@@ -92,22 +99,32 @@ sanitizer_bullet_group =  pygame.sprite.Group()
 face_mask_group = pygame.sprite.Group()
 
 #ADD MUSIC
+music_lev=0.5
+sound_lev=0.5
 coin_fx=pygame.mixer.Sound('coin.wav')
-coin_fx.set_volume(0.5)
+coin_fx.set_volume(sound_lev)
 jump_fx=pygame.mixer.Sound('jump.wav')
-jump_fx.set_volume(0.5)
+jump_fx.set_volume(sound_lev)
 mixer.music.load('intro.wav')
 mixer.music.play()
+mixer.music.set_volume(music_lev)
 click_fx=pygame.mixer.Sound('click.mp3')
-click_fx.set_volume(0.5)
+click_fx.set_volume(sound_lev)
 pickup_fx=pygame.mixer.Sound('pickup.wav')
-pickup_fx.set_volume(0.5)
+pickup_fx.set_volume(sound_lev)
 shot_fx=pygame.mixer.Sound('shot.wav')
-shot_fx.set_volume(0.5)
+shot_fx.set_volume(sound_lev)
 shock_fx=pygame.mixer.Sound('shock.wav')
-shock_fx.set_volume(0.5)
-
-
+shock_fx.set_volume(sound_lev)
+def load_sound_lev():
+    coin_fx.set_volume(sound_lev)
+    jump_fx.set_volume(sound_lev)
+    click_fx.set_volume(sound_lev)
+    pickup_fx.set_volume(sound_lev)
+    shot_fx.set_volume(sound_lev)
+    shock_fx.set_volume(sound_lev)
+    mixer.music.set_volume(music_lev)
+    
 def load_new(row,col):
     global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
     rows=row
@@ -242,18 +259,97 @@ class Btn():
 
     def update(self):
         key = pygame.mouse.get_pressed()
-        if key[0]:
+        if key[0] and not self.click:
+            self.click=True
             x,y = pygame.mouse.get_pos()
-            if self.image_rect.collidepoint(x,y) and not self.click:
-                self.click=True
-        else:
+            print('comes')
+            if self.image_rect.collidepoint(x,y):
+                print('does')
+                return True
+        elif not key[0]:
             self.click=False
-        return self.click
+        return False
     
 start_btn = Btn(250,350,400,200,'play.jpeg')    
 quit_btn = Btn(250,550,400,200,'quit.jpeg')
 settings_btn=Btn(800,900,100,100,'settings.jpeg')
 
+class toggle():
+    def __init__(self,x,y,width,height,ini,text):
+        self.width = width
+        self.height= height
+        self.val=ini
+        self.rect=pygame.Rect(x,y,width,height)
+        font=pygame.font.Font(None,50)
+        self.text=font.render(text,True,WHITE)
+        self.text_rect=self.text.get_rect()
+        self.text_rect.topright=(x-40,y-5)
+        self.click=False
+        self.prev=self.rect.x+self.rect.width*self.val
+        self.clicked=False
+
+    def draw(self):
+        screen.blit(self.text,(self.text_rect))
+        pygame.draw.rect(screen,WHITE,self.rect,10)
+        pygame.draw.circle(screen,YELLOW,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
+        pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5,4)
+    
+    def update(self):
+        mouse = pygame.mouse.get_pressed()
+        if mouse[0] and not self.clicked:
+            x,y = pygame.mouse.get_pos()
+            if self.click:
+                if x>self.prev:
+                    if(x>self.rect.x+self.rect.width):
+                        self.val=1
+                    else:
+                        self.val=(x-self.rect.x)/self.width
+                elif x<self.prev:
+                    if(x<self.rect.x):
+                        self.val=0
+                    else:
+                        self.val=(x-self.rect.x)/self.width
+                self.prev=self.rect.x+self.rect.width*self.val
+                    
+            elif sqrt((x-self.rect.x-self.rect.width*self.val)**2 + (y-self.rect.y-self.rect.height//2)**2)<self.height//2:
+                self.click=True
+            else:
+                self.clicked=True
+        else:
+            self.click=False
+        if not mouse[0]:
+            self.clicked=False
+
+game_sound_btn=toggle(400,400,200,30,0.5,"SOUND")
+game_music_btn=toggle(400,500,200,30,0.5,"MUSIC")
+
+class menu_btn():
+    def __init__(self,x,y,width,height,text):
+        self.rect=pygame.Rect(x,y,width,height)
+        self.font=pygame.font.Font(None,40)
+        self.text=self.font.render(text,True,LIGHT_BLACK)
+        self.text_rect=self.text.get_rect()
+        self.text_rect.center=(x+width//2,y+height//2)
+        self.click=False
+    
+    def draw(self):
+        pygame.draw.rect(screen,YELLOW,self.rect)
+        pygame.draw.circle(screen,YELLOW,(self.rect.x,int(self.rect.y+self.rect.height/2)),self.rect.height/2.0)
+        pygame.draw.circle(screen,YELLOW,(self.rect.x+self.rect.width,int(self.rect.y+self.rect.height/2)),self.rect.height/2.0)
+        screen.blit(self.text,self.text_rect)
+    
+    def update(self):
+        mouse=pygame.mouse.get_pressed()
+        if mouse[0] and not self.click:
+            self.click=True
+            (x,y)=pygame.mouse.get_pos()
+            if self.rect.collidepoint(x,y):
+                return True
+        elif not mouse[0]:
+            self.click=False
+        return False
+settings_menu=menu_btn(450,700,100,50,"MENU")
+        
 class platform(pygame.sprite.Sprite):
 
     def __init__(self,x1,x2,y1,y2,x_speed,y_speed):
@@ -420,13 +516,16 @@ class character():
         self.shoot_ctr=0
         self.mask_protection_time = 0
         self.mask_immunity = 0
+        
     def jump(self,event):
         if event.key==pygame.K_SPACE:
             if not self.in_air:
+                jump_fx.play()
                 self.vel_y = -14
                 self.in_air = True
             elif not self.jumped:
-                self.vel_y =-13
+                jump_fx.play()
+                self.vel_y =-14
                 self.jumped=True
                              
     def draw_char(self, surface,world):
@@ -552,12 +651,23 @@ class character():
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
             coin_fx.play()
-        if pygame.sprite.spritecollide(self,volt_group,False):
-            self.health-=5
-            shock_fx.play()
+        for volt in volt_group.sprites():
+            if self.rect.colliderect(volt.rect):
+                if(self.rect.bottom>=volt.rect.top):
+                    dy=-min(30,self.rect.y-50)
+                    self.vel_y=-10
+                elif self.rect.top>=volt.rect.bottom:
+                    dy=min(30,screen_height-50-self.rect.y)
+                    self.vel_y=5
+                elif self.rect.x>=volt.rect.x+volt.rect.width:
+                    dx=min(50,screen_width-50-self.rect.x)
+                else:
+                    dx=-min(self.rect.x-50,50)
+                self.health-=5
+                shock_fx.play()
         if pygame.sprite.spritecollide(self,spike_group,False):
             if self.mask_immunity==0 and self.vaccine==0:
-                self.health-=5
+                self.health-=3
         
         if self.mask_protection_time>0 :
             self.mask_protection_time -= 0.2
@@ -843,6 +953,7 @@ class laser(pygame.sprite.Sprite):
                 self.move_counter=0
         else:
             self.time-=1
+    
 class App():
     def __init__(self):
         self.running = True
@@ -872,10 +983,10 @@ class App():
                 return True
         return False
     def on_render(self):
+        screen.fill(BLACK)
         global page,game_over,level
         if page == 3 :
             if game_over==-1 :
-                screen.fill(BLACK)
                 intermediate.blit(bg, (0, 0))
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
@@ -916,12 +1027,10 @@ class App():
                 screen.blit(intermediate,(-x_scroll,-y_scroll))
                 self.player.draw()
             elif game_over==1:
-                screen.fill(BLACK)
                 self.reset()
                 page=1
         if page==2:
             all=["guy1.png","guy1.png","zwalk0.bmp"]
-            screen.fill(BLACK)
             screen.blit(level_bg,(0,0))
             if self.change:
                 for i in range (1,4) :
@@ -942,8 +1051,7 @@ class App():
                 self.change=True  
                 time.sleep(0.2)
         if page == 1 :
-            screen.fill(BLACK)
-            screen.blit(level_bg,(0,0))
+            screen.blit(settings_bg,(0,0))
             if self.change:
                 for i in range (1,5) :
                     xx = f"Level {i}.png"
@@ -965,9 +1073,7 @@ class App():
                 pygame.mixer.music.stop()
                 pygame.mixer.music.load('main_theme.wav')
                 pygame.mixer.music.play(-1)
-            my_img = get_image('4.jpeg')
-            my_img = pygame.transform.scale(my_img,(1000,1000))
-            screen.blit(my_img,my_img.get_rect())
+            screen.blit(settings_bg,(0,0))
             
             start_btn.draw_btn()
             quit_btn.draw_btn()
@@ -979,10 +1085,27 @@ class App():
             if quit_btn.update():
                 pygame.quit()
             if settings_btn.update():
+                pygame.mixer.music.pause()
+                click_fx.play()
                 page=-1
         
         if page==-1:
-            pass
+            global music_lev,sound_lev
+            screen.blit(settings_bg,(0,0))
+            game_music_btn.draw()
+            game_music_btn.update()
+            music_lev=game_music_btn.val
+            game_sound_btn.draw()
+            game_sound_btn.update()
+            sound_lev=game_sound_btn.val
+            load_sound_lev()
+            settings_menu.draw()
+            screen.blit(settings_head,settings_head_rect)
+            if settings_menu.update():
+                page=0
+                pygame.mixer.music.unpause()
+                time.sleep(0.2)
+            
         pygame.display.flip()
         clock.tick(30)
 
@@ -1006,7 +1129,9 @@ class App():
         self.player.coins=0
         
     def on_execute(self):
-        global y_scroll
+        global y_scroll,to_right,to_left
+        to_right=False
+        to_left=False
         if self.on_init() == False:
             self.running = False
 
@@ -1034,7 +1159,7 @@ def load(level):
         pickle_in = open(f'level{level}_data', 'rb')
         world_data = pickle.load(pickle_in)
     world = World(world_data)
-    
+
+# print(sorted(pygame.font.get_fonts())) 
 theApp = App()
 theApp.on_execute()
-
