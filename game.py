@@ -155,7 +155,7 @@ def load_new(row,col):
     
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
-            {"rows":60,'cols':20,'x':750,'y':300,"mov_tile":[(5,57,0,2)]},
+            {"rows":60,'cols':20,'x':50,'y':2500,"mov_tile":[(5,57,0,2)]},
             {"rows":20,'cols':60,'x':200,'y':800,"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
 
 class World():
@@ -755,8 +755,8 @@ class character():
                     dy=moving_tile.rect.bottom-self.rect.y-2
                     self.vel_y=3
                     up=True
-                if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
-                    self.rect.bottom=moving_tile.rect.top-2
+                if moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed>=self.rect.top and self.rect.bottom+dy>=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed:
+                    self.rect.bottom=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed-2
                     if(moving_tile.y_direction==-1):
                         dy=-moving_tile.y_speed
                     else:
@@ -1164,8 +1164,8 @@ class App():
                 intermediate.blit(gate_img,gate_rect)
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
-                moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
+                moving_platform_group.update()
                 self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
