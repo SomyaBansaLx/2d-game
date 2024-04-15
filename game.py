@@ -78,7 +78,7 @@ def get_image(path):
 
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
-bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
+bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
@@ -148,7 +148,7 @@ def load_new(row,col):
     y_scroll=max_down
     x_scroll= 0
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-    bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
+    bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
@@ -1096,7 +1096,7 @@ class App():
                 self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                self.draw_grid()
+                # self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
                 shooter_group.update()
