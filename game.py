@@ -84,7 +84,7 @@ hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_s
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
-water_img=pygame.transform.scale(get_image('water.png'),(tile_size,tile_size))
+water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size))
 
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
@@ -153,7 +153,7 @@ def load_new(row,col):
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
             {"rows":60,'cols':20,'x':50,'y':2800},
-            {"laser":[30,40],"tiles":[60,57,54,30,20],"rows":40,'cols':20,'x':50,'y':1800}]
+            {"rows":20,'cols':60,'x':250,'y':700,"mov_tile":[(58,16,2.5,0)]}]
 
 class World():
     def __init__(self, data):
@@ -667,15 +667,15 @@ class character():
         for volt in volt_group.sprites():
             if self.rect.colliderect(volt.rect):
                 if(self.rect.bottom>=volt.rect.top+10):
-                    dy=-min(30,self.rect.y-50)
+                    dy=-30
                     self.vel_y=-10
                 elif self.rect.top>=volt.rect.bottom-10:
-                    dy=min(30,screen_height-50-self.rect.y)
+                    dy=30
                     self.vel_y=5
                 if self.rect.x>=volt.rect.x+volt.rect.width-20:
-                    dx=min(30,screen_width-50-self.rect.x)
+                    dx=30
                 elif self.rect.x+self.rect.width<=volt.rect.x+20:
-                    dx=-min(self.rect.x-30,50)
+                    dx=-30
                 self.health-=5
                 shock_fx.play()
         
