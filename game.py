@@ -152,7 +152,7 @@ def load_new(row,col):
     
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
-            {"rows":60,'cols':20,'x':50,'y':2800},
+            {"rows":60,'cols':20,'x':750,'y':300,"mov_tile":[(5,57,0,2)]},
             {"rows":20,'cols':60,'x':250,'y':700,"mov_tile":[(58,16,2.5,0)]}]
 
 class World():
@@ -241,7 +241,7 @@ class World():
                     hosp=Hospital(col_pos * tile_size, row_pos * tile_size)
                     my_hospital_group.add(hosp)
                 elif ele == 19:
-                    bact=Bacteria(col_pos * tile_size, row_pos * tile_size,80,20,2)
+                    bact=Bacteria(col_pos * tile_size, row_pos * tile_size,40,20,2)
                     bacteria_group.add(bact)
                 elif ele == 20:
                     img_rect = water_img.get_rect()
@@ -617,6 +617,7 @@ class character():
         global game_over,page
         walk_limit = 8
         key = pygame.key.get_pressed()
+        mouse  = pygame.mouse.get_pressed()
         dx = 0
         dy = 0
         col_thresh=10
@@ -646,7 +647,7 @@ class character():
             self.image = self.images_r[self.index]
         else:
             self.image = self.images_l[self.index]
-        if key[pygame.K_s] and self.sanitizer_bullet_count>0 and self.shoot_ctr==10:
+        if mouse[0] and self.sanitizer_bullet_count>0 and self.shoot_ctr==10:
             shot_fx.play()
             self.shoot_ctr=0
             self.sanitizer_bullet_count -=1
@@ -1096,7 +1097,7 @@ class App():
                 self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
                 moving_platform_group.draw(intermediate)
-                # self.draw_grid()
+                self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
                 shooter_group.update()

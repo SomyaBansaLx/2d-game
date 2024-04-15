@@ -8,7 +8,7 @@ pygame.init()
 levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':20,'cols':60}]
 level = 3
 main_page  = 0 
-clock = pygame.time.Clock()
+clock = pygame.time.Clock()    
 fps = 60
 y_scroll=0
 x_scroll=0
