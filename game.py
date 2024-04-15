@@ -85,7 +85,9 @@ settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
 water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size))
-
+gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
+gate_img.set_colorkey(BLACK)
+gate_rect=None
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
@@ -105,6 +107,7 @@ sanitizer_group =  pygame.sprite.Group()
 sanitizer_gun_group =  pygame.sprite.Group()
 sanitizer_bullet_group =  pygame.sprite.Group()
 face_mask_group = pygame.sprite.Group()
+new_platform_group= pygame.sprite.Group()
 
 #ADD MUSIC
 music_lev=0.5
@@ -153,11 +156,10 @@ def load_new(row,col):
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
             {"rows":60,'cols':20,'x':750,'y':300,"mov_tile":[(5,57,0,2)]},
-            {"rows":20,'cols':60,'x':250,'y':700,"mov_tile":[(58,16,2.5,0)]}]
+            {"rows":20,'cols':60,'x':200,'y':800,"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
 
 class World():
     def __init__(self, data):
-        global dirt_tile,grass_tile
         load_new(level_data[level-1]["rows"],level_data[level-1]['cols'])
         tile_num=0
         mov_tile=0
@@ -248,9 +250,16 @@ class World():
                     img_rect.x = tile_size*col_pos
                     img_rect.y = tile_size*row_pos
                     self.tile_list.append((water_img, img_rect))
-                    
+                elif ele ==21 :
+                    global gate_rect
+                    gate_rect= gate_img.get_rect()
+                    gate_rect.x = tile_size*col_pos
+                    gate_rect.y = tile_size*row_pos+tile_size//2
                 col_pos += 1
             row_pos += 1
+        if "coord_tile" in level_data[level-1].keys():
+            for plats in level_data[level-1]["coord_tile"]:
+                moving_platform_group.add(new_platform(plats))
 
     def draw_world(self, surface):
         for tile in self.tile_list:
@@ -390,6 +399,58 @@ class platform(pygame.sprite.Sprite):
         if self.rect.bottom > self.y2  or self.rect.top < self.y1:
             self.y_direction *= -1
 
+class new_platform(pygame.sprite.Sprite):
+    def __init__(self,list):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('white_tile.png'),(tile_size,tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = list[0][0]
+        self.rect.y = list[0][1]
+        self.list=list
+        self.next=1
+        hyp=math.hypot(list[1][0]-list[0][0],list[1][1]-list[0][1])
+        self.x_direction=(list[1][0]-list[0][0])/hyp
+        self.y_direction=(list[1][1]-list[0][1])/hyp
+        self.x_speed=int(list[0][2]*self.x_direction)
+        self.y_speed=int(list[0][2]*self.y_direction)
+        if self.x_direction>0:
+            self.x_direction=1
+        else:
+            self.x_direction=-1
+            self.x_speed=-self.x_speed
+        if self.y_direction>0:
+            self.y_direction=1
+        else:
+            self.y_direction=-1
+            self.y_speed=-self.y_speed
+        
+    def update(self):
+        self.rect.x += self.x_speed*self.x_direction
+        self.rect.y += self.y_speed*self.y_direction
+        next=self.next
+        if abs(self.rect.x-self.list[next][0])<2 and abs(self.rect.y-self.list[next][1])<2:
+            next+=1
+            if(next==len(self.list)):
+                self.kill()
+                return
+            self.rect.x=self.list[next-1][0]
+            self.rect.y=self.list[next-1][1]
+            hyp=math.hypot(self.list[next][0]-self.list[next-1][0],self.list[next][1]-self.list[next-1][1])
+            self.x_direction=(self.list[next][0]-self.list[next-1][0])/hyp
+            self.y_direction=(self.list[next][1]-self.list[next-1][1])/hyp
+            self.next=next
+            self.x_speed=self.x_direction*self.list[next-1][2]
+            self.y_speed=self.y_direction*self.list[next-1][2]
+            if self.x_direction>0:
+                self.x_direction=1
+            else:
+                self.x_direction=-1
+                self.x_speed=-self.x_speed
+            if self.y_direction>0:
+                self.y_direction=1
+            else:
+                self.y_direction=-1
+                self.y_speed=-self.y_speed
 
 class Health_Bar():
     def __init__(self,max_health):
@@ -683,7 +744,7 @@ class character():
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
-                if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height):
+                if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height) and self.rect.top>moving_tile.rect.bottom:
                     dx=moving_tile.x_direction*moving_tile.x_speed
                     if(moving_tile.x_direction==1):
                         left=True
@@ -691,8 +752,8 @@ class character():
                         right=True
             if not (self.rect.x+self.rect.width < moving_tile.rect.x or self.rect.x>moving_tile.rect.x + moving_tile.rect.width):
                 if moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed-self.rect.y<2 and self.rect.y+dy<=moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed:
-                    dy=moving_tile.rect.bottom-self.rect.y
-                    self.vel_y=0
+                    dy=moving_tile.rect.bottom-self.rect.y-2
+                    self.vel_y=3
                     up=True
                 if moving_tile.rect.top>=self.rect.bottom and self.rect.bottom+dy>=moving_tile.rect.top:
                     self.rect.bottom=moving_tile.rect.top-2
@@ -795,6 +856,13 @@ class character():
             game_over = 1
         if (up and down)or(left and right) or (self.health<=0):
             game_over = 1
+        
+        if self.rect.colliderect(gate_rect):
+            print('yay')
+            game_over=0
+        else:
+            print(self.rect)
+            print(gate_rect)
             
     def draw(self):
         self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
@@ -1093,6 +1161,7 @@ class App():
                 if key[pygame.K_ESCAPE]:
                     page = 1
                 intermediate.blit(bg, (0, 0))
+                intermediate.blit(gate_img,gate_rect)
                 world.draw_world(intermediate)
                 self.player.draw_char(intermediate,world)
                 moving_platform_group.update()
@@ -1127,6 +1196,8 @@ class App():
                 face_mask_group.draw(intermediate)
                 bacteria_group.update(self.player)
                 bacteria_group.draw(intermediate)
+                new_platform_group.draw(intermediate)
+                new_platform_group.update()
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
@@ -1140,8 +1211,8 @@ class App():
             elif game_over==0:
                 victory_fx.play()
                 self.coins+=self.player.coins
-                page=1
                 self.reset()
+                page=1
         if page==2:
             all=["guy1.png","guy1.png","zwalk0.bmp"]
             screen.blit(level_bg,(0,0))
