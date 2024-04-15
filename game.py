@@ -61,6 +61,9 @@ settings_font.set_bold(True)
 settings_head=settings_font.render("SETTINGS",True,BLACK)
 settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
+menu_head=settings_font.render("MICROBIAL MAYHEM",True,LIGHT_BLACK)
+menu_head_rect=menu_head.get_rect()
+menu_head_rect.center=(500,100)
 #load images
 _image_library = {}
 def get_image(path):
@@ -216,7 +219,7 @@ class World():
                     spike_group.add(spik)
                 elif ele == 13:
                     my_img = get_image(random.choice(people_images))
-                    my_img = pygame.transform.scale(my_img,(50,100))
+                    my_img = pygame.transform.scale(my_img,(50,80))
                     people_group.add(People(col_pos * tile_size, row_pos * tile_size,my_img))
                 elif ele == 14:
                     ele=level_data[level-1]['mov_tile'][mov_tile]
@@ -443,11 +446,23 @@ class People(pygame.sprite.Sprite):
         self.image = img
         self.rect = self.image.get_rect()
         self.rect.x = x
-        self.rect.y = y
+        self.rect.y = y+20
         people_group.add(self)
+        self.radii=45
+        self.inc=1
 
-    def draw(self):
-        screen.blit(self.image, self.rect)
+    def draww(self):
+        pygame.draw.circle(intermediate,WHITE,(self.rect.x+25,self.rect.y+40),self.radii,3)
+    
+    def update(self):
+        if(self.radii==100):
+            self.inc=-1
+        elif self.radii==45:
+            self.inc=1
+        self.radii+=self.inc
+        self.draww()
+        
+        
 
 class SanitizerGun(pygame.sprite.Sprite):
 
@@ -473,15 +488,13 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.rect.y = y
         self.move_speed= move_speed
         self.damage = damage
-        self.direction = None
-        self.direction_x = 0 
-        self.direction_y = 0 
         self.calc_direction()
 
     def calc_direction(self):
         mouse_pos = pygame.mouse.get_pos()
 
-        dx, dy = mouse_pos[0] - self.rect.x, mouse_pos[1] - self.rect.y
+        dx, dy = mouse_pos[0]+x_scroll - self.rect.x, mouse_pos[1]+y_scroll - self.rect.y
+        print(dx,dy)
         dist = math.hypot(dx, dy)
         dx, dy = dx / dist, dy / dist 
         self.direction_x = dx
@@ -530,6 +543,21 @@ class Bacteria(pygame.sprite.Sprite):
 
     def draw(self):
         screen.blit(self.image,self.rect)
+        
+def collision(rleft, rtop, width, height,center_x, center_y, radius):
+    rright, rbottom = rleft + width/2, rtop + height/2
+    cleft, ctop     = center_x-radius, center_y-radius
+    cright, cbottom = center_x+radius, center_y+radius
+    if rright < cleft or rleft > cright or rbottom < ctop or rtop > cbottom:
+        return False 
+    for x in (rleft, rleft+width):
+        for y in (rtop, rtop+height):
+            if math.hypot(x-center_x, y-center_y) <= radius:
+                return True
+    if rleft <= center_x <= rright and rtop <= center_y <= rbottom:
+        return True 
+
+    return False
 
 class character():
     def __init__(self, x, y,file,imgs):
@@ -628,26 +656,22 @@ class character():
 
         dy = self.vel_y
         self.vel_y = min(10, self.vel_y+1)
-        for tile in world.tile_list:  
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0
-            elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                if self.vel_y < 0:
-                    dy = tile[1].bottom - self.rect.top
-                    self.vel_y = 0
-                elif self.vel_y >= 0:
-                    dy = tile[1].top - self.rect.bottom
-                    self.vel_y = 0
-                    self.in_air=False
-                    self.jumped=False
-            if abs(tile[1].x-self.rect.x-self.rect.width)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
-                right=True
-            if abs(tile[1].x+tile[1].width-self.rect.x)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
-                left=True
-            if abs(tile[1].bottom-self.rect.y)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
-                up=True
-            if abs(tile[1].y-self.rect.bottom)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
-                down=True
+        
+        for volt in volt_group.sprites():
+            if self.rect.colliderect(volt.rect):
+                if(self.rect.bottom>=volt.rect.top+10):
+                    dy=-min(30,self.rect.y-50)
+                    self.vel_y=-10
+                elif self.rect.top>=volt.rect.bottom-10:
+                    dy=min(30,screen_height-50-self.rect.y)
+                    self.vel_y=5
+                if self.rect.x>=volt.rect.x+volt.rect.width-20:
+                    dx=min(30,screen_width-50-self.rect.x)
+                elif self.rect.x+self.rect.width<=volt.rect.x+20:
+                    dx=-min(self.rect.x-30,50)
+                self.health-=5
+                shock_fx.play()
+        
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
@@ -673,6 +697,26 @@ class character():
                     self.jumped=False
                     down=True
             
+        for tile in world.tile_list:  
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0
+            elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                if self.vel_y < 0:
+                    dy = tile[1].bottom - self.rect.top
+                    self.vel_y = 0
+                elif self.vel_y >= 0:
+                    dy = tile[1].top - self.rect.bottom
+                    self.vel_y = 0
+                    self.in_air=False
+                    self.jumped=False
+            if abs(tile[1].x-self.rect.x-self.rect.width)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                right=True
+            if abs(tile[1].x+tile[1].width-self.rect.x)<2 and not(self.rect.y>tile[1].bottom or self.rect.bottom<tile[1].y):
+                left=True
+            if abs(tile[1].bottom-self.rect.y)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                up=True
+            if abs(tile[1].y-self.rect.bottom)<2 and not(self.rect.x>tile[1].x+tile[1].width or self.rect.x+self.rect.width<tile[1].x):
+                down=True
         
         for hosp in my_hospital_group:
             if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
@@ -698,6 +742,10 @@ class character():
             if monster.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 bacteria_group.remove(monster)
                 self.health -= 20
+        
+        for people in people_group.sprites():
+            if collision(self.rect.x,self.rect.y,self.rect.width,self.rect.height,people.rect.x+25,people.rect.y+40,people.radii):
+                self.health-=1
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
             if self.mask_immunity==0 and self.vaccine==0:
@@ -705,20 +753,7 @@ class character():
         if pygame.sprite.spritecollide(self,coin_group,True):
             self.coins+=1
             coin_fx.play()
-        for volt in volt_group.sprites():
-            if self.rect.colliderect(volt.rect):
-                if(self.rect.bottom>=volt.rect.top):
-                    dy=-min(30,self.rect.y-50)
-                    self.vel_y=-10
-                elif self.rect.top>=volt.rect.bottom:
-                    dy=min(30,screen_height-50-self.rect.y)
-                    self.vel_y=5
-                elif self.rect.x>=volt.rect.x+volt.rect.width:
-                    dx=min(50,screen_width-50-self.rect.x)
-                else:
-                    dx=-min(self.rect.x-50,50)
-                self.health-=5
-                shock_fx.play()
+            
         if pygame.sprite.spritecollide(self,spike_group,False):
             if self.mask_immunity==0 and self.vaccine==0:
                 self.health-=3
@@ -1068,6 +1103,7 @@ class App():
                 volt_group.update()
                 spike_group.draw(intermediate)
                 spike_group.update()
+                people_group.update()
                 people_group.draw(intermediate)
                 my_hospital_group.draw(intermediate)
                 sanitizer_gun_group.update(self.player)
@@ -1136,6 +1172,7 @@ class App():
             start_btn.draw_btn()
             quit_btn.draw_btn()
             settings_btn.draw_btn()
+            screen.blit(menu_head,menu_head_rect)
             if start_btn.update():
                 page=1
                 pygame.mixer.music.fadeout(1000)
