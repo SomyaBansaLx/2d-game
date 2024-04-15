@@ -64,6 +64,7 @@ settings_head_rect.center=(500,100)
 menu_head=settings_font.render("MICROBIAL MAYHEM",True,LIGHT_BLACK)
 menu_head_rect=menu_head.get_rect()
 menu_head_rect.center=(500,100)
+total_lev=4
 #load images
 _image_library = {}
 def get_image(path):
@@ -81,6 +82,9 @@ bg=pygame.transform.scale(get_image('bg1.jpg'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
+dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
+grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
+water_img=pygame.transform.scale(get_image('water.png'),(tile_size,tile_size))
 
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
@@ -159,10 +163,6 @@ class World():
         mov_tile=0
         laser_num=0
         self.tile_list = []
-        dirt_img = pygame.transform.scale(
-            get_image('brown_wood.png'), (tile_size, tile_size))
-        grass_img = pygame.transform.scale(
-            get_image('brick1.png'), (tile_size, tile_size))
         row_pos = 0
         for row in data:
             col_pos = 0
@@ -243,7 +243,11 @@ class World():
                 elif ele == 19:
                     bact=Bacteria(col_pos * tile_size, row_pos * tile_size,80,20,2)
                     bacteria_group.add(bact)
-                
+                elif ele == 20:
+                    img_rect = water_img.get_rect()
+                    img_rect.x = tile_size*col_pos
+                    img_rect.y = tile_size*row_pos
+                    self.tile_list.append((water_img, img_rect))
                     
                 col_pos += 1
             row_pos += 1
@@ -701,6 +705,11 @@ class character():
                     down=True
             
         for tile in world.tile_list:  
+            if tile[0]==water_img and tile[1].colliderect(self.rect):
+                self.health=0
+                game_over=1
+                return
+            
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
             elif tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):

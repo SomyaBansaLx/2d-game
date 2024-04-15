@@ -5,7 +5,7 @@ from os import path
 import random
 
 pygame.init()
-levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':40,'cols':20}]
+levels=[{'rows':40,'cols':40},{'rows':60,'cols':20},{'rows':60,'cols':20},{'rows':20,'cols':60}]
 level = 3
 main_page  = 0 
 clock = pygame.time.Clock()
@@ -52,6 +52,7 @@ sanitizer_gun_img=pygame.transform.scale(pygame.image.load('sanitizer_gun.jpeg')
 mask_img=pygame.transform.scale(pygame.image.load('mask.jpeg'),(tile_size,tile_size))
 hosp_img=pygame.transform.scale(pygame.image.load('hospital.jpeg'),(2*tile_size,2*tile_size))
 sanitizer_img=pygame.transform.scale(pygame.image.load('sanitizer.png'),(tile_size,tile_size))
+water_img=pygame.transform.scale(pygame.image.load('water.png'),(2*tile_size,2*tile_size))
 
 clicked = False
 click=False
@@ -161,6 +162,9 @@ def draw_world():
                 elif  world_data[row][col] == 19:
                     img = pygame.transform.scale(bacteria_img,(tile_size,tile_size))
                     intermediate.blit(img, (col * tile_size, row * tile_size))
+                elif  world_data[row][col] == 20:
+                    # img = pygame.transform.scale(water_img,(tile_size,tile_size))
+                    intermediate.blit(water_img, (col * tile_size, row * tile_size))
                     
 class Button():
     def __init__(self, x, y, image):
@@ -194,7 +198,7 @@ load_button = Button(500, screen_height - 80, load_img)
 #main game loop
 run = True
 while run:
-    max_num=19
+    max_num=20
     clock.tick(fps)
     #draw background
     screen.fill(green)
@@ -211,11 +215,10 @@ while run:
         pickle.dump(world_data, pickle_out)
         pickle_out.close()
     if load_button.draw():
-        #load in level data
         if path.exists(f'level{level}_data'):
             pickle_in = open(f'level{level}_data', 'rb')
             world_data = pickle.load(pickle_in)
-    #text showing current level
+            
     draw_text(f'Level: {level}', font, white, tile_size, screen_height - 60)
     draw_text('Press UP or DOWN to change level', font, white, tile_size, screen_height - 40)
 
