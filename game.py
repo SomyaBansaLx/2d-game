@@ -235,7 +235,7 @@ class World():
                     hosp=Hospital(col_pos * tile_size, row_pos * tile_size)
                     my_hospital_group.add(hosp)
                 elif ele == 19:
-                    bact=Bacteria(col_pos * tile_size, row_pos * tile_size,80,20,4)
+                    bact=Bacteria(col_pos * tile_size, row_pos * tile_size,80,20,2)
                     bacteria_group.add(bact)
                 
                     
@@ -745,11 +745,10 @@ class character():
         surface.blit(self.image, self.rect)
         if self.rect.x<0 or self.rect.y<0:
             game_over = 1
-        if (up and down)or(left and right):
+        if (up and down)or(left and right) or (self.health<=0):
             game_over = 1
             
     def draw(self):
-        # pygame.draw.rect(screen,WHITE,self.rect,2)
         self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
         text=self.font.render(str(self.coins),True,WHITE)
         screen.blit(text,(220,20))
@@ -1161,6 +1160,7 @@ class App():
             settings_menu.draw()
             screen.blit(settings_head,settings_head_rect)
             if settings_menu.update():
+                click_fx.play()
                 page=0
                 pygame.mixer.music.unpause()
                 time.sleep(0.2)
