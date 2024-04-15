@@ -120,6 +120,8 @@ shot_fx=pygame.mixer.Sound('shot.wav')
 shot_fx.set_volume(sound_lev)
 shock_fx=pygame.mixer.Sound('shock.wav')
 shock_fx.set_volume(sound_lev)
+victory_fx=pygame.mixer.Sound('victory.wav')
+victory_fx.set_volume(sound_lev)
 def load_sound_lev():
     coin_fx.set_volume(sound_lev)
     jump_fx.set_volume(sound_lev)
@@ -127,6 +129,7 @@ def load_sound_lev():
     pickup_fx.set_volume(sound_lev)
     shot_fx.set_volume(sound_lev)
     shock_fx.set_volume(sound_lev)
+    victory_fx.set_volume(sound_lev)
     mixer.music.set_volume(music_lev)
     
 def load_new(row,col):
@@ -1046,6 +1049,7 @@ class App():
     def __init__(self):
         self.running = True
         self.size = (1000,1000)
+        self.coins=0
         # self.display_surf = pygame.display.set_mode(self.size)
         self.change=False
     def on_init(self):
@@ -1123,6 +1127,11 @@ class App():
             elif game_over==1:
                 self.reset()
                 page=1
+            elif game_over==0:
+                victory_fx.play()
+                self.coins+=self.player.coins
+                page=1
+                self.reset()
         if page==2:
             all=["guy1.png","guy1.png","zwalk0.bmp"]
             screen.blit(level_bg,(0,0))
