@@ -298,11 +298,11 @@ class Btn():
         if not self.does:
             if(self.dec):
                 self.alpha-=2
-                if self.alpha<=171:
+                if self.alpha<=181:
                     self.dec=False
             else:
                 self.alpha+=2
-                if self.alpha>=235:
+                if self.alpha>=245:
                     self.dec=True
             self.image.set_alpha(self.alpha)
         screen.blit(self.image,self.image_rect)
