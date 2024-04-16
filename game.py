@@ -19,15 +19,18 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 LIGHT_BLACK = (80, 80, 80)
 BLUE = (0, 0, 255)
+BLUE_CORNERS = (108,68,15)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE_GRAY = (102, 153, 204)
+BLUE = (0,0,255)
 LIGHT_PURPLE = (204, 204, 255)
 VLIGHT_GREY = (220, 220, 220)
 LIGHT_GREY = (211, 211, 211)
 SILVER = (192, 192, 192)
 GREY = (128, 128, 128)
 YELLOW = (255,255,0)
+LIGHT_ORANGE= (255, 213, 128)
 MUSTARD = (255, 191, 0)
 LIGHT_BROWN = (196, 164, 132)
 BROWN = (111, 78, 55)
@@ -61,9 +64,19 @@ settings_font.set_bold(True)
 settings_head=settings_font.render("SETTINGS",True,BLACK)
 settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
-menu_head=settings_font.render("MICROBIAL MAYHEM",True,LIGHT_BLACK)
-menu_head_rect=menu_head.get_rect()
-menu_head_rect.center=(500,100)
+head_list=[]
+rev_list=[]
+max=50
+for i in range(1,max+1):
+    menu_head=settings_font.render("MICROBIAL MAYHEM",True,pygame.color.Color(255,255,255))
+    menu_head.set_alpha(i+200)
+    menu_head_rect=menu_head.get_rect()
+    menu_head_rect.center=(500,100)
+    head_list.append((menu_head,menu_head_rect))
+    rev_list.append((menu_head,menu_head_rect))
+rev_list.reverse()
+for ele in rev_list:
+    head_list.append(ele)
 total_lev=4
 #load images
 _image_library = {}
@@ -78,7 +91,7 @@ def get_image(path):
 
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
-bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
+bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
@@ -277,26 +290,42 @@ class Btn():
         self.image_rect.x = x
         self.image_rect.y = y
         self.click=False
+        self.alpha=255
+        self.does=False
+        self.dec=True
     
     def draw_btn(self):
+        if not self.does:
+            if(self.dec):
+                self.alpha-=2
+                if self.alpha<=171:
+                    self.dec=False
+            else:
+                self.alpha+=2
+                if self.alpha>=235:
+                    self.dec=True
+            self.image.set_alpha(self.alpha)
         screen.blit(self.image,self.image_rect)
 
     def update(self):
         key = pygame.mouse.get_pressed()
+        x,y = pygame.mouse.get_pos()
+        if self.image_rect.collidepoint(x,y):
+            self.image.set_alpha(255)
+            self.does=True
+        else:
+            self.does=False
         if key[0] and not self.click:
             self.click=True
-            x,y = pygame.mouse.get_pos()
-            # print('comes')
-            if self.image_rect.collidepoint(x,y):
-                # print('does')
+            if self.does:
                 return True
         elif not key[0]:
             self.click=False
         return False
     
-start_btn = Btn(250,350,400,200,'play.jpeg')    
-quit_btn = Btn(250,550,400,200,'quit.jpeg')
-settings_btn=Btn(800,900,100,100,'settings.jpeg')
+start_btn = Btn(300,300,400,150,'play.jpg')    
+quit_btn = Btn(300,480,400,150,'quit.jpg')
+settings_btn=Btn(300,660,400,150,'settings.jpg')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -1128,6 +1157,7 @@ class App():
         self.running = True
         self.size = (1000,1000)
         self.coins=0
+        self.i=0
         # self.display_surf = pygame.display.set_mode(self.size)
         self.change=False
     def on_init(self):
@@ -1153,7 +1183,7 @@ class App():
                 return True
         return False
     def on_render(self):
-        screen.fill(BLACK)
+        screen.fill(WHITE)
         global page,game_over,level
         if page == 3 :
             if game_over==-1 :
@@ -1235,7 +1265,7 @@ class App():
                 self.change=True  
                 time.sleep(0.2)
         if page == 1 :
-            screen.blit(settings_bg,(0,0))
+            screen.blit(bg,(0,0))
             if self.change:
                 for i in range (1,5) :
                     xx = f"Level {i}.png"
@@ -1257,12 +1287,13 @@ class App():
                 pygame.mixer.music.stop()
                 pygame.mixer.music.load('main_theme.wav')
                 pygame.mixer.music.play(-1)
-            screen.blit(settings_bg,(0,0))
+            screen.blit(bg,(0,0))
             
             start_btn.draw_btn()
             quit_btn.draw_btn()
             settings_btn.draw_btn()
-            screen.blit(menu_head,menu_head_rect)
+            screen.blit(head_list[self.i][0],head_list[self.i][1])
+            self.i=(self.i+1)%len(head_list)
             if start_btn.update():
                 page=1
                 pygame.mixer.music.fadeout(1000)
