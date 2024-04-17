@@ -66,8 +66,9 @@ settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
 head_list=[]
 rev_list=[]
-max=50
-for i in range(1,max+1):
+bacteria_images=['bacteria.jpeg','bacteria4.png','bacteria3.jpeg']
+maxx=50
+for i in range(1,maxx+1):
     menu_head=settings_font.render("MICROBIAL MAYHEM",True,pygame.color.Color(255,255,255))
     menu_head.set_alpha(i+200)
     menu_head_rect=menu_head.get_rect()
@@ -167,7 +168,7 @@ def load_new(row,col):
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
-            ,{"rows":60,'cols':20,'x':100,'y':2700,"laser":[50,40]},
+            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40]},
             {"rows":60,'cols':20,'x':50,'y':2500,"mov_tile":[(5,57,0,2)]},
             {"rows":20,'cols':60,'x':200,'y':800,"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
 
@@ -615,7 +616,8 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
 class Bacteria(pygame.sprite.Sprite):
     def __init__(self,x,y,health,distance,speed):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image('bacteria.jpeg'),(50,50))
+
+        self.image = pygame.transform.scale(get_image(random.choice(bacteria_images)),(50,50))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
