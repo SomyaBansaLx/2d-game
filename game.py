@@ -97,13 +97,13 @@ hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_s
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
-water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size))
+water_img=pygame.transform.scale(get_image('fungi.png'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
 gate_img.set_colorkey(BLACK)
 gate_rect=None
 level_imgs=[]
 total_lev=6
-completed_lev=5
+completed_lev=6
 for i in range(1,total_lev+1):
     img=pygame.transform.scale(get_image(f"img{i}.png"),(200,250))
     rect=img.get_rect()
@@ -188,7 +188,8 @@ level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,
             ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
-            ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}]
+            ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
+            ,{"rows":47,'cols':44,'x':50,'y':50}]
 
 class World():
     def __init__(self, data):
@@ -365,7 +366,7 @@ class toggle():
     def draw(self):
         screen.blit(self.text,(self.text_rect))
         pygame.draw.rect(screen,WHITE,self.rect,10)
-        pygame.draw.rect(screen,BLACK,)
+        pygame.draw.rect(screen,BLACK,self.rect)
         pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
     
     def update(self):
@@ -523,7 +524,7 @@ class Health_Bar():
             pygame.draw.rect(screen, RED, health_bar_rect_2)
         
         if vaccine==1:
-            health_bar_rect_3 = pygame.Rect(200,0, vaccine_health, 50)
+            health_bar_rect_3 = pygame.Rect(200,0, 2*vaccine_health, 50)
             pygame.draw.rect(screen, LIGHT_GREY, health_bar_rect_3)
 
 class face_mask(pygame.sprite.Sprite):
@@ -546,6 +547,9 @@ class sanitizer(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         sanitizer_group.add(self)
+    
+    def draw(self):
+        screen.blit(self.image,self.rect)
 
 
 class Hospital(pygame.sprite.Sprite):
@@ -737,8 +741,9 @@ class character():
         down=False
         left=False
         right=False
+
         if self.vaccine:
-            self.vaccine_health -= 0.1
+            self.vaccine_health -= 0.01
             if(self.vaccine_health<0):
                 self.vaccine = 0
 
@@ -874,9 +879,10 @@ class character():
                 down=True
         
         for hosp in my_hospital_group:
-            if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if hosp.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_v]:
                 self.vaccine = 1
                 self.vaccine_health = 200
+                my_hospital_group.remove(hosp)
 
         for guns in sanitizer_gun_group:
             if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
@@ -889,14 +895,21 @@ class character():
                 self.mask_protection_time+=100
                 face_mask_group.remove(mask)
         for sanit in sanitizer_group:
-            if sanit.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p] :
+            if sanit.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_v] :
                 pickup_fx.play()
-                # self.mask_protection_time+=100
+                self.vaccine = 1
+                self.vaccine_health  = min(100,self.vaccine_health+100)
                 sanitizer_group.remove(sanit)
         for monster in bacteria_group:
             if monster.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 bacteria_group.remove(monster)
-                self.health -= 20
+                if self.vaccine_health>=50:
+                    self.vaccine_health -=50
+                else :
+                    self.health -= (50-self.vaccine_health)
+                    self.vaccine_health = 0
+                    self.vaccine = 0 
+                
         
         for people in people_group.sprites():
             if collision(self.rect.x,self.rect.y,self.rect.width,self.rect.height,people.rect.x+25,people.rect.y+40,people.radii):
@@ -958,28 +971,33 @@ class coins(pygame.sprite.Sprite):
         self.rect.y = y
         
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y,stay_imag,attack_images,speed,health,damage):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('blob.png').convert()
-        self.image.set_colorkey(BLACK)
+        self.image = pygame.transform.scale(get_image(stay_imag),(50,80))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.move_direction = 1
         self.move_counter = 0
         self.attack_counter=0
-        self.in_attack=False
+        self.attack_imgs = attack_images
+        self.attack_index = 0 
+        self.attack = False
+        self.original_x = x
+        self.move_direction = 0 
+        self.speed = speed
+        self.health = health
+        self.damage = damage
 
-    def update(self):
-        if not self.in_attack:
-            self.rect.x += self.move_direction
-            self.move_counter += 1
-            if abs(self.move_counter) > 50:
-                self.move_direction *= -1
-                self.move_counter *= -1
-        else:
-            pass
+    def update(self,player):
+        if abs(self.rect.y-player.rect.y)<=100 and  abs(self.rect.x-player.rect.x)<=400:
+            self.attack = 1
+        else : 
+            self.attack = 0 
 
+        if self.attack == 1:
+            self.move_direction = (player.rect.x-self.rect.x)/abs(player.rect.x-self.rect.x)
+            self.rect.x += self.move_direction*self.speed
+            self.index = (self.index+1)%(len(self.attack_imgs))
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
@@ -1274,6 +1292,7 @@ class App():
                 sanitizer_bullet_group.update()
                 sanitizer_bullet_group.draw(intermediate)
                 face_mask_group.draw(intermediate)
+                sanitizer_group.draw(intermediate)
                 bacteria_group.update(self.player)
                 bacteria_group.draw(intermediate)
                 new_platform_group.draw(intermediate)
