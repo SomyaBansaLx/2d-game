@@ -1284,7 +1284,7 @@ class App():
                 self.reset()
                 page=1
         if page==2:
-            all=["guy1.png","guy1.png","zwalk0.bmp","zwalk0.bmp","Idle (1).png"]
+            all=["guy1.png","Idle (1).png","zwalk0.bmp","zwalk0.bmp","Idle (1).png","Idle (1).png"]
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
             if self.change:
@@ -1292,10 +1292,10 @@ class App():
                     click_fx.play()
                     page=1
                     self.change=False
-                for i in range (1,6) :
+                for i in range (1,7) :
                     xx = f"char{i}/"
-                    screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(200,200)),pygame.Rect(((i-1)%3)*200+100,100+500*int((i-1)/3),200,200))
-                    char_btn = Btn(((i-1)%3)*200+100,400+200*int((i-1)/3),200,100,f"img{i}.png")
+                    screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(200,200)),pygame.Rect(((i-1)%3)*250+100,100+400*int((i-1)/3),200,200))
+                    char_btn = Btn(((i-1)%3)*250+100,400+400*int((i-1)/3),200,100,f"img{i}.png")
                     char_btn.draw_btn()
                     if char_btn.update():
                         click_fx.play()
