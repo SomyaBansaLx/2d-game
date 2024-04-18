@@ -679,9 +679,10 @@ class character():
         self.vaccine = 0
         self.vaccine_health = 0
         self.sanitizer_bullet_count = 0 
+        print(imgs)
         for i in range(0, len(imgs)):
-            img = pygame.transform.scale(get_image(file+imgs[i]), (45, 80))
-            img.set_colorkey(BLACK)
+            img = pygame.transform.scale(get_image(file+imgs[i]), (44, 80))
+            # img.set_colorkey(BLACK)
             img_flip = pygame.transform.flip(img, True, False)
             self.images_r.append(img)
             self.images_l.append(img_flip)
@@ -806,6 +807,15 @@ class character():
         #             self.jumped=False
         #             down=True
         for moving_tile in moving_platform_group:
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and not (moving_tile.x_speed==0):
+                if self.rect.x<moving_tile.rect.x:
+                    self.rect.x=moving_tile.rect.x-self.rect.width
+                else:
+                    self.rect.x=(moving_tile.rect.x+moving_tile.rect.width)
+                dx=0
+                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction,self.rect.y,self.rect.width,self.rect.height):
+                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
+                    
             if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x+dx>=moving_tile.rect.x + moving_tile.rect.width):
                 if not (self.rect.top<=moving_tile.rect.top and self.rect.bottom>=moving_tile.rect.bottom):
                     if self.rect.y+dy<moving_tile.rect.y and self.rect.bottom+dy>=moving_tile.rect.y and dy>=0:
@@ -826,14 +836,6 @@ class character():
                         dy=0
                         self.vel_y=1
                         up=True
-            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                if self.rect.x<moving_tile.rect.x:
-                    self.rect.x=moving_tile.rect.x-self.rect.width
-                else:
-                    self.rect.x=(moving_tile.rect.x+moving_tile.rect.width)
-                dx=0
-                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction,self.rect.y,self.rect.width,self.rect.height):
-                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
                 
         for tile in world.tile_list:  
             if tile[0]==water_img and tile[1].colliderect(self.rect.x,self.rect.y+1,self.width,self.height):
@@ -1233,7 +1235,7 @@ class App():
                 moving_platform_group.draw(intermediate)
                 moving_platform_group.update()
                 self.player.draw_char(intermediate,world)
-                self.draw_grid()
+                # self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
                 shooter_group.update()
@@ -1282,7 +1284,7 @@ class App():
                 self.reset()
                 page=1
         if page==2:
-            all=["guy1.png","guy1.png","zwalk0.bmp"]
+            all=["guy1.png","guy1.png","zwalk0.bmp","zwalk0.bmp","Idle (1).png"]
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
             if self.change:
@@ -1290,10 +1292,10 @@ class App():
                     click_fx.play()
                     page=1
                     self.change=False
-                for i in range (1,4) :
+                for i in range (1,6) :
                     xx = f"char{i}/"
-                    screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(300,300)),pygame.Rect(((i-1)%2)*500+100,100+500*int((i-1)/2),300,300))
-                    char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"img{i}.png")
+                    screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(200,200)),pygame.Rect(((i-1)%3)*200+100,100+500*int((i-1)/3),200,200))
+                    char_btn = Btn(((i-1)%3)*200+100,400+200*int((i-1)/3),200,100,f"img{i}.png")
                     char_btn.draw_btn()
                     if char_btn.update():
                         click_fx.play()
@@ -1301,6 +1303,7 @@ class App():
                         game_over=-1
                         page=3 
                         lst = os.listdir(xx)
+                        lst.sort()
                         load(level)
                         print(screen_width,screen_height)
                         self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,f"char{i}/",lst) 
