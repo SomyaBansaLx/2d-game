@@ -117,7 +117,7 @@ for i in range(1,total_char+1):
     img=pygame.transform.scale(get_image(f"char{i}/{all[i-1]}"),(100,100))
     rect=img.get_rect()
     rect.x=i*150-50
-    rect.y=100
+    rect.y=150
     char_imgs.append((img,rect))
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
@@ -1297,7 +1297,7 @@ class App():
         if page==2:
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
-            pygame.draw.rect(screen,GREY,pygame.Rect(0,50,1000,200))
+            pygame.draw.rect(screen,GREY,pygame.Rect(0,120,1000,140))
             if self.change:
                 if back_btn.update():
                     click_fx.play()
