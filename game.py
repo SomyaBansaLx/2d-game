@@ -90,7 +90,7 @@ def get_image(path):
     return image
 
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+end_bg=pygame.transform.scale(get_image('end.jpg'),(3*tile_size//4,3*tile_size//4))
 bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
@@ -103,7 +103,7 @@ gate_img.set_colorkey(BLACK)
 gate_rect=None
 level_imgs=[]
 total_lev=6
-completed_lev=5
+completed_lev=6
 for i in range(1,total_lev+1):
     img=pygame.transform.scale(get_image(f"img{i}.png"),(200,250))
     rect=img.get_rect()
@@ -186,10 +186,11 @@ def load_new(row,col):
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
-            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
+            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[(60,4),(40,4)],"mov_tile":[(12,60,0,3)]}
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
-            ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}]
+            ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
+            ,{"rows":40,"cols":20,'x':800,'y':100,"mov_tile":[(14,18,2,0)],"laser":[(0,0)]}]
 
 class World():
     def __init__(self, data):
@@ -232,7 +233,7 @@ class World():
                     shooter_group.add(my_shooter)
                     self.tile_list.append((my_shooter.image, my_shooter_img_rect))
                 elif ele == 6:
-                    laser_group.add(laser(col_pos * tile_size, row_pos * tile_size,1,4,1,level_data[level-1]["laser"][laser_num]))
+                    laser_group.add(laser(col_pos * tile_size, row_pos * tile_size,1,level_data[level-1]["laser"][laser_num][1],1,level_data[level-1]["laser"][laser_num][0]))
                     laser_num+=1
                 elif ele == 7:
                     ninja_group.add(Ninja(col_pos * tile_size, row_pos * tile_size))
@@ -1200,7 +1201,7 @@ class laser(pygame.sprite.Sprite):
             pygame.draw.rect(intermediate,RED,rect)
             if rect.colliderect(player.rect):
                 game_over=1
-            intermediate.blit(end_bg,(self.least-tile_size,self.rect.y))
+            intermediate.blit(end_bg,(self.least-end_bg.get_width(),self.rect.y))
                     
             self.move_counter+=1
             if self.move_counter==self.move_speed:
