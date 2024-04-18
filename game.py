@@ -97,7 +97,7 @@ hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_s
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
-water_img=pygame.transform.scale(get_image('fungi.png'),(2*tile_size,2*tile_size))
+water_img=pygame.transform.scale(get_image('fungi.jpeg'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
 gate_img.set_colorkey(BLACK)
 gate_rect=None
@@ -120,7 +120,7 @@ for i in range(1,total_char+1):
     rect.y=150
     char_imgs.append((img,rect))
 #ALL GROUPS
-blob_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 laser_group = pygame.sprite.Group()
@@ -215,8 +215,8 @@ class World():
                     self.tile_list.append((grass_img, img_rect))
                 #add enemies
                 elif ele == 3:
-                    blob = Enemy(col_pos * tile_size, row_pos * tile_size + 15)
-                    blob_group.add(blob)
+                    blob = Enemy(col_pos * tile_size, row_pos * tile_size,"enemy",1,10,10)
+                    enemy_group.add(blob)
                 elif ele == 4:
                     my_shooter = shooter(col_pos * tile_size, row_pos * tile_size,60,1,10)
                     my_shooter_img_rect = my_shooter.image.get_rect()
@@ -910,7 +910,6 @@ class character():
                     self.vaccine_health = 0
                     self.vaccine = 0 
                 
-        
         for people in people_group.sprites():
             if collision(self.rect.x,self.rect.y,self.rect.width,self.rect.height,people.rect.x+25,people.rect.y+40,people.radii):
                 self.health-=1
@@ -971,33 +970,78 @@ class coins(pygame.sprite.Sprite):
         self.rect.y = y
         
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y,stay_imag,attack_images,speed,health,damage):
+    def __init__(self, x, y,attack_images,speed,health,damage):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image(stay_imag),(50,80))
+        lst=[f for f in os.listdir(attack_images)]
+        lst.pop(0)
+        lst.sort()
+        self.r_imgs=[]
+        self.l_imgs=[]
+        print(lst)
+        for img in lst:
+            print(img)
+            new_img=pygame.transform.scale(get_image(attack_images+"/"+img),(80,60))
+            self.l_imgs.append(new_img)
+            self.r_imgs.append(pygame.transform.flip(new_img,True,False))
+        self.image=self.r_imgs[0]
         self.rect = self.image.get_rect()
         self.rect.x = x
-        self.rect.y = y
-        self.move_counter = 0
+        self.rect.y = y-20
         self.attack_counter=0
+        self.in_attack=0
         self.attack_imgs = attack_images
-        self.attack_index = 0 
+        self.index = 0 
         self.attack = False
         self.original_x = x
-        self.move_direction = 0 
+        self.step=0
+        self.move_max=100
+        self.move_direction = 1
         self.speed = speed
         self.health = health
         self.damage = damage
 
     def update(self,player):
-        if abs(self.rect.y-player.rect.y)<=100 and  abs(self.rect.x-player.rect.x)<=400:
-            self.attack = 1
-        else : 
-            self.attack = 0 
+        if not self.attack:
+            self.attack_counter-=1
+            # if(self.move_direction==1):
+            #     self.rect.x+=1
+            #     self.image=self.r_imgs[0]
+            #     if self.rect.x-self.original_x>self.move_max:
+            #         self.move_direction=-1
+            # else:
+            #     self.rect.x-=1
+            #     self.image=self.l_imgs[0]
+            #     if self.original_x - self.rect.x<self.move_max:
+            #         self.move_direction=1
+            if self.attack_counter<=0 and not ((player.rect.bottom<self.rect.y) or player.rect.top>self.rect.bottom):
+                if abs(self.rect.x-player.rect.x)<200:
+                    self.attack=True
+                    self.step=(self.rect.x-player.rect.x)/4
+                    self.attack_counter=30
+                    self.attacked=False
+        else:
+            if self.in_attack==0:
+                self.in_attack=4
+                if self.index==0:
+                    self.in_attack=15
+                self.index+=1
+                if(self.index==len(self.r_imgs)):
+                    self.attack=False
+                    self.index=0
+                    self.rect.x=self.original_x
+                    self.image=self.l_imgs[0]
+                else:
+                    if(self.step>0):
+                        self.image=self.l_imgs[self.index]
+                    else:
+                        self.image=self.r_imgs[self.index]
+                    self.rect.x-=self.step
+                    if(self.rect.colliderect(player.rect)) and not self.attacked:
+                        player.health-=self.damage
+                        self.attacked=True
+            else:
+                self.in_attack-=1
 
-        if self.attack == 1:
-            self.move_direction = (player.rect.x-self.rect.x)/abs(player.rect.x-self.rect.x)
-            self.rect.x += self.move_direction*self.speed
-            self.index = (self.index+1)%(len(self.attack_imgs))
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
@@ -1265,8 +1309,8 @@ class App():
                 moving_platform_group.update()
                 self.player.draw_char(intermediate,world)
                 # self.draw_grid()
-                blob_group.update()
-                blob_group.draw(intermediate)
+                enemy_group.update(self.player)
+                enemy_group.draw(intermediate)
                 shooter_group.update()
                 shooter_group.draw(intermediate)
                 bullet_group.update()
@@ -1426,7 +1470,7 @@ class App():
 
     def reset(self):
         self.__init__()
-        blob_group.empty()
+        enemy_group.empty()
         shooter_group.empty()
         bullet_group.empty()
         ninja_group.empty()
