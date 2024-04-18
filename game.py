@@ -60,6 +60,7 @@ x_scroll=max_right
 game_over=0
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 settings_font=pygame.font.SysFont('arial',70)
+small_font=pygame.font.SysFont(None,68)
 settings_font.set_bold(True)
 settings_head=settings_font.render("SETTINGS",True,BLACK)
 settings_head_rect=settings_head.get_rect()
@@ -92,7 +93,7 @@ def get_image(path):
 level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
 end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
-coin_img=get_image('coin.png')
+coin_img=pygame.transform.scale(get_image('coin.png'),(50,50))
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
@@ -366,7 +367,7 @@ class toggle():
     def draw(self):
         screen.blit(self.text,(self.text_rect))
         pygame.draw.rect(screen,WHITE,self.rect,10)
-        pygame.draw.rect(screen,BLACK,self.rect)
+        # pygame.draw.rect(screen,BLACK,self.rect)
         pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
     
     def update(self):
@@ -693,7 +694,6 @@ class character():
         self.vaccine = 0
         self.vaccine_health = 0
         self.sanitizer_bullet_count = 0 
-        print(imgs)
         for i in range(0, len(imgs)):
             img = pygame.transform.scale(get_image(file+imgs[i]), (44, 80))
             # img.set_colorkey(BLACK)
@@ -845,8 +845,6 @@ class character():
                         self.jumped=False
                         down=True
                     elif self.rect.y+dy<=moving_tile.rect.bottom and self.rect.bottom+dy>moving_tile.rect.bottom:
-                        print(moving_tile.rect.x)
-                        print(self.rect.x)
                         self.rect.top=moving_tile.rect.bottom+1
                         dy=0
                         self.vel_y=1
@@ -977,9 +975,8 @@ class Enemy(pygame.sprite.Sprite):
         lst.sort()
         self.r_imgs=[]
         self.l_imgs=[]
-        print(lst)
+
         for img in lst:
-            print(img)
             new_img=pygame.transform.scale(get_image(attack_images+"/"+img),(80,60))
             self.l_imgs.append(new_img)
             self.r_imgs.append(pygame.transform.flip(new_img,True,False))
@@ -1351,6 +1348,7 @@ class App():
                 victory_fx.play()
                 completed_lev=min(max(level+1,completed_lev),total_lev)
                 self.coins+=self.player.coins
+                print(self.coins)
                 self.reset()
                 page=1
         if page==2:
@@ -1371,7 +1369,6 @@ class App():
                 x,y=pygame.mouse.get_pos()
                 mouse=pygame.mouse.get_pressed()
                 if not self.click and mouse[0]:
-                    print('does')
                     self.click=True
                     for i in range(total_char):
                         if char_imgs[i][1].collidepoint((x,y)):
@@ -1394,6 +1391,11 @@ class App():
                 time.sleep(0.1)
         if page == 1 :
             screen.blit(bg,(0,0))
+            screen.blit(coin_img,(900,50))
+            text=small_font.render(f"$ {str(self.coins)}",True,WHITE)
+            rect=text.get_rect()
+            rect.topright=(880,50)
+            screen.blit(text,rect)
             if self.change:
                 back_btn.draw_btn()
                 if back_btn.update():
@@ -1465,7 +1467,8 @@ class App():
         clock.tick(30)
 
     def reset(self):
-        self.__init__()
+        self.i=0
+        self.player_num=0
         enemy_group.empty()
         shooter_group.empty()
         bullet_group.empty()
