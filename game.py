@@ -61,7 +61,7 @@ game_over=0
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 settings_font=pygame.font.SysFont('arial',70)
 settings_font.set_bold(True)
-settings_head=settings_font.render("SETTINGS",True,BLACK)
+settings_head=settings_font.render("SETTINGS",True,WHITE)
 settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
 head_list=[]
@@ -94,7 +94,7 @@ end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
 bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
 coin_img=get_image('coin.png')
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
-settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
+settings_bg=pygame.transform.scale(get_image('bg.png'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
 water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size))
@@ -112,14 +112,15 @@ for i in range(1,total_lev+1):
     level_imgs.append((img,rect))
 total_char=6
 char_imgs=[]
-all=["guy1.png","Idle (1).png","zwalk0.bmp","zwalk0.bmp","Idle (1).png","Idle (1).png"]
+# "zwalk0.bmp","zwalk0.bmp,"
+all=["guy1.png","Idle (1).png","spiderman.png","mario.png","Idle (1).png","Idle (1).png"]
 for i in range(1,total_char+1):
     img=pygame.transform.scale(get_image(f"char{i}/{all[i-1]}"),(100,100))
     rect=img.get_rect()
-    rect.x=i*150-50
+    rect.x=i*150-100
     rect.y=150
     char_imgs.append((img,rect))
-#ALL GROUPS
+#ALL GROUPSb
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
@@ -345,8 +346,8 @@ class Btn():
 play_btn = Btn(300,300,400,150,'play.jpg')    
 quit_btn = Btn(300,480,400,150,'quit.jpg')
 settings_btn=Btn(300,660,400,150,'settings.jpg')
-back_btn = Btn (50,50,50,50,'back.png')
-start_btn = Btn (400,700,200,150,'start.png')
+back_btn = Btn (30,30,50,50,'back.png')
+start_btn = Btn (400,750,200,120,'start.png')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -365,7 +366,7 @@ class toggle():
     def draw(self):
         screen.blit(self.text,(self.text_rect))
         pygame.draw.rect(screen,WHITE,self.rect,10)
-        pygame.draw.rect(screen,BLACK,)
+        # pygame.draw.rect(screen,BLACK,)
         pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
     
     def update(self):
@@ -405,6 +406,7 @@ class menu_btn():
         self.text_rect=self.text.get_rect()
         self.text_rect.center=(x+width//2,y+height//2)
         self.click=False
+        self.alpha=220
     
     def draw(self):
         pygame.draw.rect(screen,YELLOW,self.rect)
@@ -414,10 +416,19 @@ class menu_btn():
     
     def update(self):
         mouse=pygame.mouse.get_pressed()
+        (x,y)=pygame.mouse.get_pos()
+        does=False
+        if self.rect.collidepoint(x,y):
+            does=True
+            if not self.alpha==255:
+                self.alpha=255
+                self.text.set_alpha(self.alpha)
+        elif not self.alpha==220:
+            self.alpha=220
+            self.text.set_alpha(self.alpha)
         if mouse[0] and not self.click:
             self.click=True
-            (x,y)=pygame.mouse.get_pos()
-            if self.rect.collidepoint(x,y):
+            if does:
                 return True
         elif not mouse[0]:
             self.click=False
@@ -689,7 +700,6 @@ class character():
         self.vaccine = 0
         self.vaccine_health = 0
         self.sanitizer_bullet_count = 0 
-        print(imgs)
         for i in range(0, len(imgs)):
             img = pygame.transform.scale(get_image(file+imgs[i]), (44, 80))
             # img.set_colorkey(BLACK)
@@ -840,8 +850,6 @@ class character():
                         self.jumped=False
                         down=True
                     elif self.rect.y+dy<=moving_tile.rect.bottom and self.rect.bottom+dy>moving_tile.rect.bottom:
-                        print(moving_tile.rect.x)
-                        print(self.rect.x)
                         self.rect.top=moving_tile.rect.bottom+1
                         dy=0
                         self.vel_y=1
@@ -1297,7 +1305,7 @@ class App():
         if page==2:
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
-            pygame.draw.rect(screen,GREY,pygame.Rect(0,120,1000,140))
+            pygame.draw.rect(screen,GREY,pygame.Rect(0,120,1000,160))
             if self.change:
                 if back_btn.update():
                     click_fx.play()
@@ -1306,13 +1314,12 @@ class App():
                 for i in range (6) :
                     screen.blit(char_imgs[i][0],char_imgs[i][1])
                 start_btn.draw_btn()
-                img=pygame.transform.scale(get_image(f"char{self.player_num+1}/{all[self.player_num]}"),(200,200))
-                rect=pygame.Rect(400,450,200,200)
+                img=pygame.transform.scale(get_image(f"char{self.player_num+1}/{all[self.player_num]}"),(120,150))
+                rect=pygame.Rect(440,400,200,200)
                 screen.blit(img,rect)
                 x,y=pygame.mouse.get_pos()
                 mouse=pygame.mouse.get_pressed()
                 if not self.click and mouse[0]:
-                    print('does')
                     self.click=True
                     for i in range(total_char):
                         if char_imgs[i][1].collidepoint((x,y)):
