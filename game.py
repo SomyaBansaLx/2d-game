@@ -78,7 +78,8 @@ for i in range(1,maxx+1):
 rev_list.reverse()
 for ele in rev_list:
     head_list.append(ele)
-total_lev=4
+total_lev=6
+completed_lev=5
 #load images
 _image_library = {}
 def get_image(path):
@@ -104,10 +105,10 @@ gate_img.set_colorkey(BLACK)
 gate_rect=None
 level_imgs=[]
 for i in range(1,total_lev+1):
-    img=pygame.transform.scale(get_image(f"img{i}.png"),(250,250))
+    img=pygame.transform.scale(get_image(f"img{i}.png"),(200,250))
     rect=img.get_rect()
-    rect.x=((i-1)%2)*400+200
-    rect.y=200+400*((i-1)//2)
+    rect.x=((i-1)%3)*300+100
+    rect.y=200+400*((i-1)//3)
     level_imgs.append((img,rect))
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
@@ -161,7 +162,7 @@ def load_sound_lev():
     mixer.music.set_volume(music_lev)
     
 def load_new(row,col):
-    global rows,screen_height,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
+    global rows,screen_height,screen_width,intermediate,y_scroll,level_bg,max_down,bg,cols,x_scroll,max_right
     rows=row
     cols=col
     screen_height=tile_size*row
@@ -174,10 +175,11 @@ def load_new(row,col):
     level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
-level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
-            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40]},
-            {"rows":60,'cols':20,'x':50,'y':2500,"mov_tile":[(5,57,0,2)]},
-            {"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
+level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
+            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40]}
+            ,{"rows":60,'cols':20,'x':50,'y':2500,"mov_tile":[(5,57,0,2)]}
+            ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
+            ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}]
 
 class World():
     def __init__(self, data):
@@ -804,17 +806,9 @@ class character():
         #             self.jumped=False
         #             down=True
         for moving_tile in moving_platform_group:
-            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                if self.rect.x<moving_tile.rect.x:
-                    self.rect.x=moving_tile.rect.x-self.rect.width
-                else:
-                    self.rect.x=(moving_tile.rect.x+moving_tile.rect.width)
-                dx=0
-                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction,self.rect.y,self.rect.width,self.rect.height):
-                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
             if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x+dx>=moving_tile.rect.x + moving_tile.rect.width):
                 if not (self.rect.top<=moving_tile.rect.top and self.rect.bottom>=moving_tile.rect.bottom):
-                    if self.rect.y+dy<moving_tile.rect.y and self.rect.bottom+dy>=moving_tile.rect.y and dy>0:
+                    if self.rect.y+dy<moving_tile.rect.y and self.rect.bottom+dy>=moving_tile.rect.y and dy>=0:
                         self.rect.bottom=moving_tile.rect.top-1
                         if(moving_tile.y_direction==-1):
                             dy=-moving_tile.y_speed
@@ -832,6 +826,14 @@ class character():
                         dy=0
                         self.vel_y=1
                         up=True
+            if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                if self.rect.x<moving_tile.rect.x:
+                    self.rect.x=moving_tile.rect.x-self.rect.width
+                else:
+                    self.rect.x=(moving_tile.rect.x+moving_tile.rect.width)
+                dx=0
+                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction,self.rect.y,self.rect.width,self.rect.height):
+                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
                 
         for tile in world.tile_list:  
             if tile[0]==water_img and tile[1].colliderect(self.rect.x,self.rect.y+1,self.width,self.height):
@@ -908,7 +910,10 @@ class character():
             game_over = 1
             
         self.rect.x += dx
+        self.rect.x=max(0,self.rect.x)
+        self.rect.x=min(screen_width,self.rect.x)
         self.rect.y += dy
+        self.rect.y=max(0,self.rect.y)
         global y_scroll,x_scroll
         if (self.rect.y<max_down+400):
             y_scroll=max(0,self.rect.y-400)
@@ -919,9 +924,7 @@ class character():
         else:
             x_scroll=min(max_right,self.rect.x-400)
         surface.blit(self.image, self.rect)
-        if self.rect.x<0 or self.rect.y<0:
-            game_over = 1
-        if (up and down)or(left and right) or (self.health<=0):
+        if (up and down)or(left and right) or (self.health<=0) or self.rect.y>screen_height:
             game_over = 1
         
         if self.rect.colliderect(gate_rect):
@@ -1218,7 +1221,7 @@ class App():
         return False
     def on_render(self):
         screen.fill(WHITE)
-        global page,game_over,level
+        global page,game_over,level,completed_lev
         if page == 3 :
             if game_over==-1 :
                 key = pygame.key.get_pressed()
@@ -1274,12 +1277,13 @@ class App():
                 page=1
             elif game_over==0:
                 victory_fx.play()
+                completed_lev=min(max(level+1,completed_lev),total_lev)
                 self.coins+=self.player.coins
                 self.reset()
                 page=1
         if page==2:
             all=["guy1.png","guy1.png","zwalk0.bmp"]
-            screen.blit(level_bg,(0,0))
+            screen.blit(bg,(0,0))
             back_btn.draw_btn()
             if self.change:
                 if back_btn.update():
@@ -1298,6 +1302,7 @@ class App():
                         page=3 
                         lst = os.listdir(xx)
                         load(level)
+                        print(screen_width,screen_height)
                         self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,f"char{i}/",lst) 
                         self.change=False
             else:
@@ -1311,12 +1316,12 @@ class App():
                     click_fx.play()
                     page=0
                     self.change=False
-                for i in range (0,4,1) :
+                for i in range (completed_lev) :
                     screen.blit(level_imgs[i][0],level_imgs[i][1])
                 x,y=pygame.mouse.get_pos()
                 mouse=pygame.mouse.get_pressed()
                 if not self.click and mouse[0]:
-                    for i in range(0,4,1):
+                    for i in range(completed_lev):
                         self.click=True
                         if level_imgs[i][1].collidepoint((x,y)):
                             i+=1
