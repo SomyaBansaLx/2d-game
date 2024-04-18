@@ -1003,16 +1003,6 @@ class Enemy(pygame.sprite.Sprite):
     def update(self,player):
         if not self.attack:
             self.attack_counter-=1
-            # if(self.move_direction==1):
-            #     self.rect.x+=1
-            #     self.image=self.r_imgs[0]
-            #     if self.rect.x-self.original_x>self.move_max:
-            #         self.move_direction=-1
-            # else:
-            #     self.rect.x-=1
-            #     self.image=self.l_imgs[0]
-            #     if self.original_x - self.rect.x<self.move_max:
-            #         self.move_direction=1
             if self.attack_counter<=0 and not ((player.rect.bottom<self.rect.y) or player.rect.top>self.rect.bottom):
                 if abs(self.rect.x-player.rect.x)<200:
                     self.attack=True
@@ -1042,6 +1032,12 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.in_attack-=1
 
+            for bullett in sanitizer_bullet_group:
+                if bullett.rect.colliderect(self.rect):
+                    self.health -= 2.5
+                    sanitizer_bullet_group.remove(bullett)
+            if self.health<=0:
+                self.kill()
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
