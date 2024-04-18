@@ -177,7 +177,7 @@ def load_new(row,col):
 level_data=[{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
             ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40]},
             {"rows":60,'cols':20,'x':50,'y':2500,"mov_tile":[(5,57,0,2)]},
-            {"rows":20,'cols':60,'x':200,'y':800,"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
+            {"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}]
 
 class World():
     def __init__(self, data):
@@ -599,8 +599,7 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
     def calc_direction(self):
         mouse_pos = pygame.mouse.get_pos()
 
-        dx, dy = mouse_pos[0]+x_scroll - self.rect.x, mouse_pos[1]+y_scroll - self.rect.y
-        print(dx,dy)
+        dx, dy = mouse_pos[0]+x_scroll - (self.rect.x+self.rect.width//2), mouse_pos[1]+y_scroll - (self.rect.y+self.rect.height//2)
         dist = math.hypot(dx, dy)
         dx, dy = dx / dist, dy / dist 
         self.direction_x = dx
@@ -780,31 +779,60 @@ class character():
                 self.health-=5
                 shock_fx.play()
         
+        # for moving_tile in moving_platform_group:
+        #     if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+        #         dx = 0
+        #         if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height):
+        #             dx=moving_tile.x_direction*moving_tile.x_speed
+        #             if(moving_tile.x_direction==1):
+        #                 left=True
+        #             else:
+        #                 right=True
+        #     if not (self.rect.x+self.rect.width < moving_tile.rect.x or self.rect.x>moving_tile.rect.x + moving_tile.rect.width):
+        #         if moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed-self.rect.y<2 and self.rect.y+dy<=moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed:
+        #             dy=moving_tile.rect.bottom-self.rect.y-2
+        #             self.vel_y=3
+        #             up=True
+        #         elif moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed>=self.rect.top and self.rect.bottom+dy>=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed:
+        #             self.rect.bottom=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed-2
+        #             if(moving_tile.y_direction==-1):
+        #                 dy=-moving_tile.y_speed
+        #             else:
+        #                 dy=0
+        #             dx+=moving_tile.x_speed*moving_tile.x_direction
+        #             self.in_air=False
+        #             self.jumped=False
+        #             down=True
         for moving_tile in moving_platform_group:
             if moving_tile.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0
-                if moving_tile.rect.colliderect(self.rect.x-2*moving_tile.x_direction, self.rect.y, self.width, self.height) and self.rect.top>moving_tile.rect.bottom:
-                    dx=moving_tile.x_direction*moving_tile.x_speed
-                    if(moving_tile.x_direction==1):
-                        left=True
-                    else:
-                        right=True
-            if not (self.rect.x+self.rect.width < moving_tile.rect.x or self.rect.x>moving_tile.rect.x + moving_tile.rect.width):
-                if moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed-self.rect.y<2 and self.rect.y+dy<=moving_tile.rect.bottom+moving_tile.y_direction*moving_tile.y_speed:
-                    dy=moving_tile.rect.bottom-self.rect.y-2
-                    self.vel_y=3
-                    up=True
-                if moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed>=self.rect.top and self.rect.bottom+dy>=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed:
-                    self.rect.bottom=moving_tile.rect.top+moving_tile.y_direction*moving_tile.y_speed-2
-                    if(moving_tile.y_direction==-1):
-                        dy=-moving_tile.y_speed
-                    else:
+                if self.rect.x<moving_tile.rect.x:
+                    self.rect.x=moving_tile.rect.x-self.rect.width
+                else:
+                    self.rect.x=(moving_tile.rect.x+moving_tile.rect.width)
+                dx=0
+                if moving_tile.rect.colliderect(self.rect.x-moving_tile.x_direction,self.rect.y,self.rect.width,self.rect.height):
+                    self.rect.x+=moving_tile.x_direction*moving_tile.x_speed
+            if not (self.rect.x+self.rect.width <= moving_tile.rect.x or self.rect.x+dx>=moving_tile.rect.x + moving_tile.rect.width):
+                if not (self.rect.top<=moving_tile.rect.top and self.rect.bottom>=moving_tile.rect.bottom):
+                    if self.rect.y+dy<moving_tile.rect.y and self.rect.bottom+dy>=moving_tile.rect.y and dy>0:
+                        self.rect.bottom=moving_tile.rect.top-1
+                        if(moving_tile.y_direction==-1):
+                            dy=-moving_tile.y_speed
+                        else:
+                            dy=0
+                        self.rect.x+=moving_tile.x_speed*moving_tile.x_direction
+                        self.vel_y=1
+                        self.in_air=False
+                        self.jumped=False
+                        down=True
+                    elif self.rect.y+dy<=moving_tile.rect.bottom and self.rect.bottom+dy>moving_tile.rect.bottom:
+                        print(moving_tile.rect.x)
+                        print(self.rect.x)
+                        self.rect.top=moving_tile.rect.bottom+1
                         dy=0
-                    dx+=moving_tile.x_speed*moving_tile.x_direction
-                    self.in_air=False
-                    self.jumped=False
-                    down=True
-            
+                        self.vel_y=1
+                        up=True
+                
         for tile in world.tile_list:  
             if tile[0]==water_img and tile[1].colliderect(self.rect.x,self.rect.y+1,self.width,self.height):
                 self.health=0
@@ -897,11 +925,7 @@ class character():
             game_over = 1
         
         if self.rect.colliderect(gate_rect):
-            print('yay')
             game_over=0
-        else:
-            print(self.rect)
-            print(gate_rect)
             
     def draw(self):
         self.health_bar.update(self.health,self.vaccine,self.vaccine_health)
@@ -1203,9 +1227,9 @@ class App():
                 intermediate.blit(bg, (0, 0))
                 intermediate.blit(gate_img,gate_rect)
                 world.draw_world(intermediate)
-                self.player.draw_char(intermediate,world)
                 moving_platform_group.draw(intermediate)
                 moving_platform_group.update()
+                self.player.draw_char(intermediate,world)
                 self.draw_grid()
                 blob_group.update()
                 blob_group.draw(intermediate)
@@ -1293,10 +1317,7 @@ class App():
                 mouse=pygame.mouse.get_pressed()
                 if not self.click and mouse[0]:
                     for i in range(0,4,1):
-                        print(i)
                         self.click=True
-                        print(x,y)
-                        print(level_imgs[i][1])
                         if level_imgs[i][1].collidepoint((x,y)):
                             i+=1
                             pygame.mixer.music.load(f"level{i}.wav")
@@ -1405,6 +1426,5 @@ def load(level):
         world_data = pickle.load(pickle_in)
     world = World(world_data)
 
-# print(sorted(pygame.font.get_fonts())) 
 theApp = App()
 theApp.on_execute()
