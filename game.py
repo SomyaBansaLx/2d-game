@@ -102,6 +102,13 @@ water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size
 gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
 gate_img.set_colorkey(BLACK)
 gate_rect=None
+level_imgs=[]
+for i in range(1,total_lev+1):
+    img=pygame.transform.scale(get_image(f"img{i}.png"),(250,250))
+    rect=img.get_rect()
+    rect.x=((i-1)%2)*400+200
+    rect.y=200+400*((i-1)//2)
+    level_imgs.append((img,rect))
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
@@ -291,7 +298,7 @@ class Btn():
         self.image_rect.x = x
         self.image_rect.y = y
         self.click=False
-        self.alpha=255
+        self.alpha=181
         self.does=False
         self.dec=True
     
@@ -327,6 +334,7 @@ class Btn():
 start_btn = Btn(300,300,400,150,'play.jpg')    
 quit_btn = Btn(300,480,400,150,'quit.jpg')
 settings_btn=Btn(300,660,400,150,'settings.jpg')
+back_btn = Btn (50,50,50,50,'back.png')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -345,8 +353,8 @@ class toggle():
     def draw(self):
         screen.blit(self.text,(self.text_rect))
         pygame.draw.rect(screen,WHITE,self.rect,10)
-        pygame.draw.circle(screen,YELLOW,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
-        pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5,4)
+        pygame.draw.rect(screen,BLACK,)
+        pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
     
     def update(self):
         mouse = pygame.mouse.get_pressed()
@@ -798,7 +806,7 @@ class character():
                     down=True
             
         for tile in world.tile_list:  
-            if tile[0]==water_img and tile[1].colliderect(self.rect):
+            if tile[0]==water_img and tile[1].colliderect(self.rect.x,self.rect.y+1,self.width,self.height):
                 self.health=0
                 game_over=1
                 return
@@ -1248,11 +1256,16 @@ class App():
         if page==2:
             all=["guy1.png","guy1.png","zwalk0.bmp"]
             screen.blit(level_bg,(0,0))
+            back_btn.draw_btn()
             if self.change:
+                if back_btn.update():
+                    click_fx.play()
+                    page=1
+                    self.change=False
                 for i in range (1,4) :
                     xx = f"char{i}/"
                     screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(300,300)),pygame.Rect(((i-1)%2)*500+100,100+500*int((i-1)/2),300,300))
-                    char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"Level {i}.png")
+                    char_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,f"img{i}.png")
                     char_btn.draw_btn()
                     if char_btn.update():
                         click_fx.play()
@@ -1265,24 +1278,37 @@ class App():
                         self.change=False
             else:
                 self.change=True  
-                time.sleep(0.2)
+                time.sleep(0.1)
         if page == 1 :
             screen.blit(bg,(0,0))
             if self.change:
-                for i in range (1,5) :
-                    xx = f"Level {i}.png"
-                    screen.blit(pygame.transform.scale(get_image(f"img{i}.png"),(300,300)),pygame.Rect(((i-1)%2)*500+100,100+500*int((i-1)/2),300,300))
-                    level_btn = Btn(((i-1)%2)*500+100,400+500*int((i-1)/2),300,100,xx)
-                    level_btn.draw_btn()
-                    if level_btn.update():
-                        pygame.mixer.music.load(f"level{i}.wav")
-                        click_fx.play()
-                        level=i
-                        page=2 
-                        self.change=False 
+                back_btn.draw_btn()
+                if back_btn.update():
+                    click_fx.play()
+                    page=0
+                    self.change=False
+                for i in range (0,4,1) :
+                    screen.blit(level_imgs[i][0],level_imgs[i][1])
+                x,y=pygame.mouse.get_pos()
+                mouse=pygame.mouse.get_pressed()
+                if not self.click and mouse[0]:
+                    for i in range(0,4,1):
+                        print(i)
+                        self.click=True
+                        print(x,y)
+                        print(level_imgs[i][1])
+                        if level_imgs[i][1].collidepoint((x,y)):
+                            i+=1
+                            pygame.mixer.music.load(f"level{i}.wav")
+                            click_fx.play()
+                            level=i
+                            page=2 
+                            self.change=False 
+                elif not mouse[0]:
+                    self.click=False
             else:
                 self.change=True  
-                time.sleep(0.2)
+                time.sleep(0.1)
 
         if page == 0 :
             if not mixer.music.get_busy():
@@ -1290,7 +1316,6 @@ class App():
                 pygame.mixer.music.load('main_theme.wav')
                 pygame.mixer.music.play(-1)
             screen.blit(bg,(0,0))
-            
             start_btn.draw_btn()
             quit_btn.draw_btn()
             settings_btn.draw_btn()
@@ -1298,6 +1323,7 @@ class App():
             self.i=(self.i+1)%len(head_list)
             if start_btn.update():
                 page=1
+                self.click=True
                 pygame.mixer.music.fadeout(1000)
                 click_fx.play()
             if quit_btn.update():
@@ -1323,7 +1349,7 @@ class App():
                 click_fx.play()
                 page=0
                 pygame.mixer.music.unpause()
-                time.sleep(0.2)
+                time.sleep(0.1)
             
         pygame.display.flip()
         clock.tick(30)
