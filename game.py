@@ -78,8 +78,6 @@ for i in range(1,maxx+1):
 rev_list.reverse()
 for ele in rev_list:
     head_list.append(ele)
-total_lev=6
-completed_lev=5
 #load images
 _image_library = {}
 def get_image(path):
@@ -104,12 +102,23 @@ gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_si
 gate_img.set_colorkey(BLACK)
 gate_rect=None
 level_imgs=[]
+total_lev=6
+completed_lev=5
 for i in range(1,total_lev+1):
     img=pygame.transform.scale(get_image(f"img{i}.png"),(200,250))
     rect=img.get_rect()
     rect.x=((i-1)%3)*300+100
     rect.y=200+400*((i-1)//3)
     level_imgs.append((img,rect))
+total_char=6
+char_imgs=[]
+all=["guy1.png","Idle (1).png","zwalk0.bmp","zwalk0.bmp","Idle (1).png","Idle (1).png"]
+for i in range(1,total_char+1):
+    img=pygame.transform.scale(get_image(f"char{i}/{all[i-1]}"),(100,100))
+    rect=img.get_rect()
+    rect.x=i*150-50
+    rect.y=100
+    char_imgs.append((img,rect))
 #ALL GROUPS
 blob_group = pygame.sprite.Group()
 shooter_group = pygame.sprite.Group()
@@ -333,10 +342,11 @@ class Btn():
             self.click=False
         return False
     
-start_btn = Btn(300,300,400,150,'play.jpg')    
+play_btn = Btn(300,300,400,150,'play.jpg')    
 quit_btn = Btn(300,480,400,150,'quit.jpg')
 settings_btn=Btn(300,660,400,150,'settings.jpg')
 back_btn = Btn (50,50,50,50,'back.png')
+start_btn = Btn (400,700,200,150,'start.png')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -1197,6 +1207,7 @@ class App():
         self.size = (1000,1000)
         self.coins=0
         self.i=0
+        self.player_num=0
         # self.display_surf = pygame.display.set_mode(self.size)
         self.change=False
     def on_init(self):
@@ -1284,30 +1295,41 @@ class App():
                 self.reset()
                 page=1
         if page==2:
-            all=["guy1.png","Idle (1).png","zwalk0.bmp","zwalk0.bmp","Idle (1).png","Idle (1).png"]
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
+            pygame.draw.rect(screen,GREY,pygame.Rect(0,50,1000,200))
             if self.change:
                 if back_btn.update():
                     click_fx.play()
                     page=1
                     self.change=False
-                for i in range (1,7) :
-                    xx = f"char{i}/"
-                    screen.blit(pygame.transform.scale(get_image(xx+all[i-1]),(200,200)),pygame.Rect(((i-1)%3)*250+100,100+400*int((i-1)/3),200,200))
-                    char_btn = Btn(((i-1)%3)*250+100,400+400*int((i-1)/3),200,100,f"img{i}.png")
-                    char_btn.draw_btn()
-                    if char_btn.update():
-                        click_fx.play()
-                        pygame.mixer.music.play(-1)
-                        game_over=-1
-                        page=3 
-                        lst = os.listdir(xx)
-                        lst.sort()
-                        load(level)
-                        print(screen_width,screen_height)
-                        self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,f"char{i}/",lst) 
-                        self.change=False
+                for i in range (6) :
+                    screen.blit(char_imgs[i][0],char_imgs[i][1])
+                start_btn.draw_btn()
+                img=pygame.transform.scale(get_image(f"char{self.player_num+1}/{all[self.player_num]}"),(200,200))
+                rect=pygame.Rect(400,450,200,200)
+                screen.blit(img,rect)
+                x,y=pygame.mouse.get_pos()
+                mouse=pygame.mouse.get_pressed()
+                if not self.click and mouse[0]:
+                    print('does')
+                    self.click=True
+                    for i in range(total_char):
+                        if char_imgs[i][1].collidepoint((x,y)):
+                            click_fx.play()
+                            self.player_num=i
+                elif not mouse[0]:
+                    self.click=False
+                if start_btn.update():
+                    click_fx.play()
+                    self.change=False
+                    game_over=-1
+                    page=3 
+                    lst = os.listdir(f"char{self.player_num+1}")
+                    lst.sort()
+                    self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,f"char{self.player_num+1}/",lst) 
+                    pygame.mixer.music.play(-1)
+                    load(level)
             else:
                 self.change=True  
                 time.sleep(0.1)
@@ -1345,12 +1367,12 @@ class App():
                 pygame.mixer.music.load('main_theme.wav')
                 pygame.mixer.music.play(-1)
             screen.blit(bg,(0,0))
-            start_btn.draw_btn()
+            play_btn.draw_btn()
             quit_btn.draw_btn()
             settings_btn.draw_btn()
             screen.blit(head_list[self.i][0],head_list[self.i][1])
             self.i=(self.i+1)%len(head_list)
-            if start_btn.update():
+            if play_btn.update():
                 page=1
                 self.click=True
                 pygame.mixer.music.fadeout(1000)
@@ -1399,6 +1421,7 @@ class App():
         sanitizer_gun_group.empty()
         sanitizer_bullet_group.empty()
         face_mask_group.empty()
+        bacteria_group.empty()
         moving_platform_group.empty()
         self.player.coins=0
         
