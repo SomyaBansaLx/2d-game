@@ -5,7 +5,7 @@ from os import path
 import random
 
 pygame.init()
-levels=[{'rows':20,'cols':40},{'rows':60,'cols':60},{'rows':60,'cols':20},{'rows':20,'cols':60},{'rows':40,'cols':40},{'rows':47,'cols':44}]
+levels=[{'rows':20,'cols':40},{'rows':60,'cols':60},{'rows':60,'cols':20},{'rows':20,'cols':60},{'rows':40,'cols':40},{'rows':47,'cols':43}]
 level = 6
 main_page  = 0 
 clock = pygame.time.Clock()    
@@ -27,22 +27,22 @@ pygame.display.set_caption('Level Editor')
 
 
 #load images
-bg_img = pygame.image.load('bg.jpg')
+bg_img = pygame.image.load('bg.png')
 bg_img = pygame.transform.scale(bg_img, (screen_width, screen_height - margin))
 dirt_img = pygame.image.load('brick1.png')
 grass_img = pygame.image.load('brown_wood.png')
 blob_img = pygame.image.load('blob.png')
-lava_img = pygame.image.load('lava.png')
+lava_img = pygame.image.load('lava.jpg')
 save_img = pygame.image.load('save_btn.png')
 load_img = pygame.image.load('load_btn.png')
-bacteria_img =  pygame.image.load('bacteria.jpeg')
+bacteria_img =  pygame.image.load('bacteria.png')
 shooter_img = pygame.image.load('shooter.png')
 mask_img = pygame.image.load('mask.jpeg')
 sanitizer_img = pygame.image.load('sanitizer.png')
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 people_img = pygame.image.load(random.choice(people_images))
 shooter_left= pygame.transform.flip(shooter_img, True, False)
-ninja=pygame.transform.scale(pygame.image.load('lava.png'),(tile_size,tile_size))
+ninja=pygame.transform.scale(pygame.image.load('lava.jpg'),(tile_size,tile_size))
 zap_img = pygame.transform.scale(pygame.image.load('zapper.jpg'),(tile_size,tile_size))
 gayab_img= pygame.transform.scale(pygame.image.load('white_tile.png'),(tile_size,tile_size))
 coin_img= pygame.transform.scale(pygame.image.load('coin.png'),(tile_size,tile_size))
@@ -54,7 +54,7 @@ hosp_img=pygame.transform.scale(pygame.image.load('hospital.jpeg'),(2*tile_size,
 sanitizer_img=pygame.transform.scale(pygame.image.load('sanitizer.png'),(tile_size,tile_size))
 water_img=pygame.transform.scale(pygame.image.load('water.png'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(pygame.image.load('gate.png'),(tile_size,int(1.5*tile_size)))
-boss_img=pygame.transform.scale(pygame.image.load('bacteria.jpeg'),(2*tile_size,2*tile_size))
+boss_img=pygame.transform.scale(pygame.image.load('bacteria.png'),(2*tile_size,2*tile_size))
 
 
 clicked = False

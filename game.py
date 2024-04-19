@@ -190,7 +190,7 @@ level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
             ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
-            ,{"rows":47,'cols':44,'x':500,'y':50}]
+            ,{"rows":47,'cols':43,'x':50,'y':50}]
 
 class World():
     def __init__(self, data):
@@ -301,13 +301,13 @@ class World():
     def draw_world(self, surface):
         for tile in self.tile_list:
             surface.blit(tile[0], tile[1])
-            # pygame.draw.rect(surface,tile[1])
+          
 
 class bacteria_bullet(pygame.sprite.Sprite):
 
     def __init__(self, x, y,vel_x,vel_y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image('bacteria2.jpeg'),(24,15))
+        self.image = pygame.transform.scale(get_image('bacteria2.png'),(24,15))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -329,7 +329,7 @@ class Boss(pygame.sprite.Sprite):
 
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(get_image('bacteria.jpeg'),(100,100))
+        self.image = pygame.transform.scale(get_image('bacteria.png'),(100,100))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -463,7 +463,6 @@ class toggle():
     def draw(self):
         screen.blit(self.text,(self.text_rect))
         pygame.draw.rect(screen,WHITE,self.rect,10)
-        # pygame.draw.rect(screen,BLACK,self.rect)
         pygame.draw.circle(screen,BLACK,(self.rect.x+self.rect.width*self.val,int(self.rect.y+self.rect.height//2)),int(self.height//2)+5)
     
     def update(self):
@@ -984,11 +983,11 @@ class character():
             if guns.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
                 pickup_fx.play()
                 sanitizer_gun_group.remove(guns)
-                self.sanitizer_bullet_count +=40
+                self.sanitizer_bullet_count += 30
         for mask in face_mask_group:
             if mask.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
                 pickup_fx.play()
-                self.mask_protection_time+=100
+                self.mask_protection_time = min(150,self.mask_protection_time+100)
                 face_mask_group.remove(mask)
         for sanit in sanitizer_group:
             if sanit.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_v] :
@@ -999,12 +998,11 @@ class character():
         for monster in bacteria_group:
             if monster.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 bacteria_group.remove(monster)
-                if self.vaccine_health>=50:
-                    self.vaccine_health -=50
+                if self.mask_protection_time>=50:
+                    self.mask_protection_time -= 50
                 else :
-                    self.health -= (50-self.vaccine_health)
-                    self.vaccine_health = 0
-                    self.vaccine = 0 
+                    self.health -= (50-self.mask_protection_time)
+                    self.mask_protection_time = 0 
                 
         for people in people_group.sprites():
             if collision(self.rect.x,self.rect.y,self.rect.width,self.rect.height,people.rect.x+25,people.rect.y+40,people.radii):
