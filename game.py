@@ -251,7 +251,7 @@ class World():
                     coin=coins(col_pos * tile_size, row_pos * tile_size)
                     coin_group.add(coin)
                 elif ele == 11:
-                    volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.jpg'))
+                    volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.png'))
                     volt_group.add(volt)
                 elif ele == 12:
                     spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('virus.png'))
@@ -1549,6 +1549,10 @@ class App():
                 pygame.mixer.music.fadeout(1000)
                 click_fx.play()
             if quit_btn.update():
+                with open('info.txt','w') as f:
+                    f.write(str(self.coins)+'\n')
+                    f.write(str(completed_lev)+'\n')
+                    f.close()
                 pygame.quit()
             if settings_btn.update():
                 pygame.mixer.music.pause()
@@ -1609,6 +1613,10 @@ class App():
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    with open('info.txt','w') as f:
+                        f.write(str(self.coins)+'\n')
+                        f.write(str(completed_lev)+'\n')
+                        f.close()
                     pygame.quit()
                 elif event.type == MOUSEBUTTONDOWN:
                     if event.button == 4:
@@ -1631,5 +1639,11 @@ def load(level):
         world_data = pickle.load(pickle_in)
     world = World(world_data)
 
+with open ('info.txt','r') as file:
+    coinz=int(file.readline())
+    lev=int(file.readline())
+    file.close()
 theApp = App()
+theApp.coins=coinz
+completed_lev=lev
 theApp.on_execute()
