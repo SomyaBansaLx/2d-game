@@ -97,7 +97,7 @@ hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_s
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
-water_img=pygame.transform.scale(get_image('fungi3.png'),(2*tile_size,2*tile_size))
+water_img=pygame.transform.scale(get_image('water.png'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
 gate_img.set_colorkey(BLACK)
 gate_rect=None
