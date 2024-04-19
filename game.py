@@ -186,7 +186,7 @@ def load_new(row,col):
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
-            ,{"rows":60,'cols':39,'x':100,'y':200,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
+            ,{"rows":60,'cols':39,'x':100,'y':2700,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
             ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
@@ -1157,7 +1157,7 @@ class Volts(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image =img
         # self.image.set_colorkey(WHITE)
-        self.image= pygame.transform.scale(self.image,(3*tile_size,tile_size))
+        self.image= pygame.transform.scale(self.image,(int(3.8*tile_size),tile_size))
         self.rect=self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -1298,7 +1298,6 @@ class shooter(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('shooter.png').convert()
         self.image=pygame.transform.scale(self.image,(tile_size,tile_size))
-        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.move_direction=is_right
         self.rect.x = x
