@@ -61,6 +61,7 @@ game_over=0
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 settings_font=pygame.font.SysFont('arial',70)
 small_font=pygame.font.SysFont(None,68)
+smallest_font=pygame.font.SysFont(None,40)
 settings_font.set_bold(True)
 settings_head=settings_font.render("SETTINGS",True,BLACK)
 settings_head_rect=settings_head.get_rect()
@@ -118,7 +119,7 @@ for i in range(1,total_char+1):
     img=pygame.transform.scale(get_image(f"char{i}/{all[i-1]}"),(100,100))
     rect=img.get_rect()
     rect.x=i*150-50
-    rect.y=150
+    rect.y=600
     char_imgs.append((img,rect))
 #ALL GROUPS
 enemy_group = pygame.sprite.Group()
@@ -344,11 +345,11 @@ class Btn():
             self.click=False
         return False
     
-play_btn = Btn(300,300,400,150,'play.jpg')    
-quit_btn = Btn(300,480,400,150,'quit.jpg')
-settings_btn=Btn(300,660,400,150,'settings.jpg')
+play_btn = Btn(300,300,400,150,'play.jpg')
+settings_btn=Btn(300,480,400,150,'settings.jpg')   
+quit_btn = Btn(300,660,400,150,'quit.jpg')
 back_btn = Btn (50,50,50,50,'back.png')
-start_btn = Btn (400,700,200,150,'start.png')
+start_btn = Btn (400,800,200,120,'start.png')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -1358,7 +1359,12 @@ class App():
         if page==2:
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
-            pygame.draw.rect(screen,GREY,pygame.Rect(0,120,1000,140))
+            pygame.draw.rect(screen,BLUE_GRAY,pygame.Rect(0,560,1000,180))
+            txt=smallest_font.render("SELECT A CHARACTER",True,WHITE)
+            txt_rect=txt.get_rect()
+            txt_rect.bottom=550
+            txt_rect.x=20
+            screen.blit(txt,txt_rect)
             if self.change:
                 if back_btn.update():
                     click_fx.play()
@@ -1368,7 +1374,8 @@ class App():
                     screen.blit(char_imgs[i][0],char_imgs[i][1])
                 start_btn.draw_btn()
                 img=pygame.transform.scale(get_image(f"char{self.player_num+1}/{all[self.player_num]}"),(200,200))
-                rect=pygame.Rect(400,450,200,200)
+                img.set_colorkey(BLACK)
+                rect=pygame.Rect(400,200,200,200)
                 screen.blit(img,rect)
                 x,y=pygame.mouse.get_pos()
                 mouse=pygame.mouse.get_pressed()
