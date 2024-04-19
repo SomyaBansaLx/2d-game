@@ -54,6 +54,8 @@ hosp_img=pygame.transform.scale(pygame.image.load('hospital.jpeg'),(2*tile_size,
 sanitizer_img=pygame.transform.scale(pygame.image.load('sanitizer.png'),(tile_size,tile_size))
 water_img=pygame.transform.scale(pygame.image.load('water.png'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(pygame.image.load('gate.png'),(tile_size,int(1.5*tile_size)))
+boss_img=pygame.transform.scale(pygame.image.load('bacteria.jpeg'),(2*tile_size,2*tile_size))
+
 
 clicked = False
 click=False
@@ -167,6 +169,8 @@ def draw_world():
                     intermediate.blit(water_img, (col * tile_size, row * tile_size))
                 elif world_data[row][col] == 21:
                     intermediate.blit(gate_img, (col * tile_size, row * tile_size+tile_size//2) )
+                elif world_data[row][col] == 22:
+                    intermediate.blit(boss_img, (col * tile_size, row * tile_size) )
                     
 class Button():
     def __init__(self, x, y, image):
@@ -200,7 +204,7 @@ load_button = Button(500, screen_height - 80, load_img)
 #main game loop
 run = True
 while run:
-    max_num=21
+    max_num=22
     clock.tick(fps)
     #draw background
     screen.fill(green)

@@ -140,6 +140,8 @@ sanitizer_gun_group =  pygame.sprite.Group()
 sanitizer_bullet_group =  pygame.sprite.Group()
 face_mask_group = pygame.sprite.Group()
 new_platform_group= pygame.sprite.Group()
+boss_group = pygame.sprite.Group()
+bacteria_bullet_group = pygame.sprite.Group()
 
 #ADD MUSIC
 music_lev=0.5
@@ -190,7 +192,7 @@ level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
             ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
-            ,{"rows":47,'cols':44,'x':50,'y':50}]
+            ,{"rows":47,'cols':44,'x':500,'y':50}]
 
 class World():
     def __init__(self, data):
@@ -289,6 +291,9 @@ class World():
                     gate_rect= gate_img.get_rect()
                     gate_rect.x = tile_size*col_pos
                     gate_rect.y = tile_size*row_pos+tile_size//2
+                elif ele ==22 :
+                   boss=Boss(col_pos * tile_size, row_pos * tile_size)
+                   boss_group.add(boss)
                 col_pos += 1
             row_pos += 1
         if "coord_tile" in level_data[level-1].keys():
@@ -299,6 +304,99 @@ class World():
         for tile in self.tile_list:
             surface.blit(tile[0], tile[1])
             # pygame.draw.rect(surface,tile[1])
+
+class bacteria_bullet(pygame.sprite.Sprite):
+
+    def __init__(self, x, y,vel_x,vel_y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('bacteria2.jpeg'),(24,15))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.velocity_x = vel_x
+        self.velocity_y = vel_y
+        bacteria_bullet_group.add(self)
+        self.counter = 0 
+    def update(self):
+        self.counter+= 1
+        for tilee in world.tile_list:
+            if tilee[1].colliderect(self):
+                self.kill()
+        if self.counter >2 :
+            self.rect.x += self.velocity_x
+            self.rect.y += self.velocity_y
+            self.counter = 0 
+
+class Boss(pygame.sprite.Sprite):
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(get_image('bacteria.jpeg'),(100,100))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.velocity_x = 5
+        self.velocity_y = -5
+        self.last_shoot = 0
+        self.health = 200
+        self.counter = 0
+        boss_group.add(self)
+
+    def update(self):
+        self.last_shoot+=1
+        self.counter += 1
+        if self.counter>20:
+            if self.velocity_x>0:
+                if self.velocity_y>0:
+                    self.velocity_y = -self.velocity_y
+                    self.counter = 0 
+                else :
+                    self.velocity_x = -self.velocity_x
+                    self.velocity_y = - self.velocity_y
+                    self.counter = 0
+            else :
+                if self.velocity_y>0:
+                    self.velocity_y = -self.velocity_y
+                    self.counter = 0 
+                else :
+                    self.velocity_x = -self.velocity_x
+                    self.velocity_y = - self.velocity_y
+                    self.counter = 0
+
+        if self.last_shoot==40:
+            self.last_shoot = 0 
+            create = bacteria_bullet(self.rect.x + 100, self.rect.y,20,0)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x + 100, self.rect.y+50,20,15)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x + 50, self.rect.y+100,15,20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x, self.rect.y + 100,0,20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x-50, self.rect.y + 100,-15,20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x-100, self.rect.y + 50,-20,15)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x - 100, self.rect.y,-20,0)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x - 50, self.rect.y-100,-15,-20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x - 100, self.rect.y-50,-20,-15)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x, self.rect.y - 100,0,-20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x+50, self.rect.y - 100,15,-20)
+            bacteria_bullet_group.add(create)
+            create = bacteria_bullet(self.rect.x+100, self.rect.y - 50,20,-15)
+            bacteria_bullet_group.add(create)
+        else :
+            self.rect.x += self.velocity_x
+            self.rect.y += self.velocity_y     
+        for sanit in sanitizer_bullet_group:
+            if self.rect.colliderect(sanit.rect):
+                self.health -= 20
+        if self.health <= 0:
+            self.kill()
 
 class Btn():
 
@@ -911,6 +1009,10 @@ class character():
         for people in people_group.sprites():
             if collision(self.rect.x,self.rect.y,self.rect.width,self.rect.height,people.rect.x+25,people.rect.y+40,people.radii):
                 self.health-=1
+        for bulett in bacteria_bullet_group:
+            if bulett.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                self.health -= 10
+                bacteria_bullet_group.remove(bulett)
 
         if pygame.sprite.spritecollide(self, bullet_group, True):
             if self.mask_immunity==0 and self.vaccine==0:
@@ -1029,12 +1131,12 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.in_attack-=1
 
-            for bullett in sanitizer_bullet_group:
-                if bullett.rect.colliderect(self.rect):
+        for bullett in sanitizer_bullet_group:
+            if bullett.rect.colliderect(self.rect):
                     self.health -= 2.5
                     sanitizer_bullet_group.remove(bullett)
-            if self.health<=0:
-                self.kill()
+        if self.health<=0:
+            self.kill()
 
 class bullet(pygame.sprite.Sprite) :
     def __init__(self, x, y,is_right,image,move_speed,width,height):
@@ -1334,6 +1436,10 @@ class App():
                 bacteria_group.draw(intermediate)
                 new_platform_group.draw(intermediate)
                 new_platform_group.update()
+                boss_group.update()
+                boss_group.draw(intermediate)
+                bacteria_bullet_group.update()
+                bacteria_bullet_group.draw(intermediate)
                 for tile in tile_group.sprites():
                     tile.draww()
                 for rot in rotator_group.sprites():
@@ -1485,6 +1591,8 @@ class App():
         face_mask_group.empty()
         bacteria_group.empty()
         moving_platform_group.empty()
+        bacteria_bullet_group.empty()
+        boss_group.empty()
         self.player.coins=0
         
     def on_execute(self):
