@@ -5,7 +5,7 @@ from os import path
 import random
 
 pygame.init()
-levels=[{'rows':20,'cols':40},{'rows':60,'cols':60},{'rows':60,'cols':20},{'rows':20,'cols':60},{'rows':40,'cols':40},{'rows':47,'cols':43}]
+levels=[{'rows':20,'cols':40},{'rows':60,'cols':39},{'rows':60,'cols':20},{'rows':20,'cols':60},{'rows':40,'cols':40},{'rows':47,'cols':43}]
 level = 6
 main_page  = 0 
 clock = pygame.time.Clock()    

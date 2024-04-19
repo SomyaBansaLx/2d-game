@@ -97,7 +97,7 @@ hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_s
 settings_bg=pygame.transform.scale(get_image('settings_bg.jpeg'),(1000,1000))
 dirt_img = pygame.transform.scale(get_image('brown_wood.png'), (tile_size, tile_size))
 grass_img = pygame.transform.scale(get_image('brick1.png'), (tile_size, tile_size))
-water_img=pygame.transform.scale(get_image('fungi.jpeg'),(2*tile_size,2*tile_size))
+water_img=pygame.transform.scale(get_image('fungi2.png'),(2*tile_size,2*tile_size))
 gate_img=pygame.transform.scale(get_image('gate.png'),(tile_size,int(1.5*tile_size)))
 gate_img.set_colorkey(BLACK)
 gate_rect=None
@@ -186,7 +186,7 @@ def load_new(row,col):
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
-            ,{"rows":60,'cols':60,'x':100,'y':2700,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
+            ,{"rows":60,'cols':39,'x':100,'y':2700,"laser":[50,40],"mov_tile":[(12,60,0,3)]}
             ,{"rows":60,'cols':20,'x':700,'y':400,"mov_tile":[(5,57,0,2)]}
             ,{"rows":20,'cols':60,'x':200,'y':700,"mov_tile":[(27,6,2,0)],"coord_tile":[[(100,700,2),(2300,700,3),(2300,1100,2)],[(350,1100,2),(2500,1100,2),(2500,700,2),(2800,700,2),(2800,200,2),(1500,200,2)],[(400,1100,2),(2850,1100,2),(2850,200,2)]]}
             ,{"rows":40,"cols":40,'x':60,'y':50,"mov_tile":[(12,26,0,2),(36,21,2,0),(38,38,3,0)],"tiles":[80,80,80]}
@@ -336,7 +336,7 @@ class Boss(pygame.sprite.Sprite):
         self.velocity_x = 5
         self.velocity_y = -5
         self.last_shoot = 0
-        self.health = 200
+        self.health = 400
         self.counter = 0
         boss_group.add(self)
 
@@ -361,7 +361,7 @@ class Boss(pygame.sprite.Sprite):
                     self.velocity_y = - self.velocity_y
                     self.counter = 0
 
-        if self.last_shoot==40:
+        if self.last_shoot==30:
             self.last_shoot = 0 
             create = bacteria_bullet(self.rect.x + 100, self.rect.y,20,0)
             bacteria_bullet_group.add(create)
@@ -987,7 +987,7 @@ class character():
         for mask in face_mask_group:
             if mask.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_p]:
                 pickup_fx.play()
-                self.mask_protection_time = min(150,self.mask_protection_time+100)
+                self.mask_protection_time = min(200,self.mask_protection_time+100)
                 face_mask_group.remove(mask)
         for sanit in sanitizer_group:
             if sanit.rect.colliderect(self.rect.x + dx, self.rect.y, self.width, self.height) and key[pygame.K_v] :
@@ -1024,10 +1024,7 @@ class character():
                 self.health-=3
         
         if self.mask_protection_time>0 :
-            self.mask_protection_time -= 0.2
-            self.mask_immunity = 1
-        else :
-            self.mask_immunity = 0
+            self.mask_protection_time -= 0.1
         if self.health==0:
             game_over = 1
             
