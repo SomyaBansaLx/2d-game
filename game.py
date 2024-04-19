@@ -1160,7 +1160,7 @@ class Volts(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image =img
         # self.image.set_colorkey(WHITE)
-        self.image= pygame.transform.scale(self.image,(3*tile_size,tile_size))
+        self.image= pygame.transform.scale(self.image,(int(3.8*tile_size),tile_size))
         self.rect=self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -1301,7 +1301,6 @@ class shooter(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('shooter.png').convert()
         self.image=pygame.transform.scale(self.image,(tile_size,tile_size))
-        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.move_direction=is_right
         self.rect.x = x
