@@ -61,13 +61,14 @@ game_over=0
 people_images=['man_1.jpeg','man_2.jpeg','man_3.jpeg']
 settings_font=pygame.font.SysFont('arial',70)
 small_font=pygame.font.SysFont(None,68)
+smallest_font=pygame.font.SysFont(None,40)
 settings_font.set_bold(True)
 settings_head=settings_font.render("SETTINGS",True,BLACK)
 settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
 head_list=[]
 rev_list=[]
-bacteria_images=['bacteria.jpeg','bacteria4.png','bacteria3.jpeg']
+bacteria_images=['bacteria.png','bacteria4.png','bacteria3.png']
 maxx=50
 for i in range(1,maxx+1):
     menu_head=settings_font.render("MICROBIAL MAYHEM",True,pygame.color.Color(255,255,255))
@@ -89,9 +90,7 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path).convert()
         _image_library[path] = image
     return image
-
-level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+end_bg=pygame.transform.scale(get_image('lava.jpg'),(int(5*tile_size/5),int(5*tile_size/5)))
 bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
 coin_img=pygame.transform.scale(get_image('coin.png'),(50,50))
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
@@ -118,7 +117,7 @@ for i in range(1,total_char+1):
     img=pygame.transform.scale(get_image(f"char{i}/{all[i-1]}"),(100,100))
     rect=img.get_rect()
     rect.x=i*150-50
-    rect.y=150
+    rect.y=600
     char_imgs.append((img,rect))
 #ALL GROUPS
 enemy_group = pygame.sprite.Group()
@@ -184,7 +183,6 @@ def load_new(row,col):
     max_right=screen_width-1000
     y_scroll=max_down
     x_scroll= 0
-    level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
@@ -256,7 +254,7 @@ class World():
                     volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.jpg'))
                     volt_group.add(volt)
                 elif ele == 12:
-                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('bacteria-ball.png'))
+                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('virus.png'))
                     spike_group.add(spik)
                 elif ele == 13:
                     my_img = get_image(random.choice(people_images))
@@ -442,11 +440,11 @@ class Btn():
             self.click=False
         return False
     
-play_btn = Btn(300,300,400,150,'play.jpg')    
-quit_btn = Btn(300,480,400,150,'quit.jpg')
-settings_btn=Btn(300,660,400,150,'settings.jpg')
+play_btn = Btn(300,300,400,150,'play.jpg')
+settings_btn=Btn(300,480,400,150,'settings.jpg')   
+quit_btn = Btn(300,660,400,150,'quit.jpg')
 back_btn = Btn (50,50,50,50,'back.png')
-start_btn = Btn (400,700,200,150,'start.png')
+start_btn = Btn (400,800,200,120,'start.png')
 
 class toggle():
     def __init__(self,x,y,width,height,ini,text):
@@ -711,6 +709,8 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.damage = damage
         self.calc_direction()
 
+    def kill_me(self):
+        self.kill()
     def calc_direction(self):
         mouse_pos = pygame.mouse.get_pos()
 
@@ -1460,7 +1460,12 @@ class App():
         if page==2:
             screen.blit(bg,(0,0))
             back_btn.draw_btn()
-            pygame.draw.rect(screen,GREY,pygame.Rect(0,120,1000,140))
+            pygame.draw.rect(screen,BLUE_GRAY,pygame.Rect(0,560,1000,180))
+            txt=smallest_font.render("SELECT A CHARACTER",True,WHITE)
+            txt_rect=txt.get_rect()
+            txt_rect.bottom=550
+            txt_rect.x=20
+            screen.blit(txt,txt_rect)
             if self.change:
                 if back_btn.update():
                     click_fx.play()
@@ -1470,7 +1475,8 @@ class App():
                     screen.blit(char_imgs[i][0],char_imgs[i][1])
                 start_btn.draw_btn()
                 img=pygame.transform.scale(get_image(f"char{self.player_num+1}/{all[self.player_num]}"),(200,200))
-                rect=pygame.Rect(400,450,200,200)
+                img.set_colorkey(BLACK)
+                rect=pygame.Rect(400,200,200,200)
                 screen.blit(img,rect)
                 x,y=pygame.mouse.get_pos()
                 mouse=pygame.mouse.get_pressed()
