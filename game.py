@@ -68,7 +68,7 @@ settings_head_rect=settings_head.get_rect()
 settings_head_rect.center=(500,100)
 head_list=[]
 rev_list=[]
-bacteria_images=['bacteria.jpeg','bacteria4.png','bacteria3.jpeg']
+bacteria_images=['bacteria.png','bacteria4.png','bacteria3.png']
 maxx=50
 for i in range(1,maxx+1):
     menu_head=settings_font.render("MICROBIAL MAYHEM",True,pygame.color.Color(255,255,255))
@@ -90,9 +90,7 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path).convert()
         _image_library[path] = image
     return image
-
-level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
-end_bg=pygame.transform.scale(get_image('end.png'),(tile_size,tile_size))
+end_bg=pygame.transform.scale(get_image('lava.jpg'),(int(5*tile_size/5),int(5*tile_size/5)))
 bg=pygame.transform.scale(get_image('bg.png'),(screen_width,screen_height))
 coin_img=pygame.transform.scale(get_image('coin.png'),(50,50))
 hosp_img=pygame.transform.scale(get_image('hospital.jpeg'),(2*tile_size,2*tile_size))
@@ -183,7 +181,6 @@ def load_new(row,col):
     max_right=screen_width-1000
     y_scroll=max_down
     x_scroll= 0
-    level_bg=pygame.transform.scale(get_image('level_bg.jpg'),(screen_width,screen_width))
     bg=pygame.transform.scale(get_image('try_bg2.jpeg'),(screen_width,screen_height))
     
 level_data=[{"rows":20,'cols':40,'x':100,'y':450,"mov_tile":[(10,14,0,2),(37,18,2,0)]}
@@ -255,7 +252,7 @@ class World():
                     volt=Volts(col_pos * tile_size, row_pos * tile_size,get_image('volts.jpg'))
                     volt_group.add(volt)
                 elif ele == 12:
-                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('bacteria-ball.png'))
+                    spik=spike(col_pos * tile_size, row_pos * tile_size,get_image('virus.png'))
                     spike_group.add(spik)
                 elif ele == 13:
                     my_img = get_image(random.choice(people_images))
@@ -614,6 +611,8 @@ class Sanitizerbullet(pygame.sprite.Sprite) :
         self.damage = damage
         self.calc_direction()
 
+    def kill_me(self):
+        self.kill()
     def calc_direction(self):
         mouse_pos = pygame.mouse.get_pos()
 
@@ -1030,10 +1029,10 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 self.in_attack-=1
 
-            for bullett in sanitizer_bullet_group:
+            for bullett in sanitizer_bullet_group.sprites():
                 if bullett.rect.colliderect(self.rect):
                     self.health -= 2.5
-                    sanitizer_bullet_group.remove(bullett)
+                    bullett.kill_me()
             if self.health<=0:
                 self.kill()
 
