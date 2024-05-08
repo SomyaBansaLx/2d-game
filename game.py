@@ -104,7 +104,7 @@ gate_rect=None
 level_imgs=[]
 level_numbers= []
 total_lev=6
-completed_lev=6
+completed_lev=2
 for i in range(1,total_lev+1):
     img=pygame.transform.scale(get_image(f"level{i}.png"),(200,250))
     rect=img.get_rect()
@@ -1462,7 +1462,9 @@ class App():
                 time.sleep(2)
                 self.reset()
                 page=1
+                pygame.mixer.music.pause()
             elif game_over==0:
+                pygame.mixer.music.pause()
                 victory_fx.play()
                 time.sleep(2)
                 completed_lev=min(max(level+1,completed_lev),total_lev)
