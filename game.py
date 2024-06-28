@@ -58,6 +58,8 @@ y_scroll=max_down
 max_right=screen_width-1000
 x_scroll=max_right
 game_over=0
+ifile='./imgs/'
+mfile='./music/'
 people_images=['man_1.png','man_3.png']
 settings_font=pygame.font.SysFont('arial',70)
 small_font=pygame.font.SysFont(None,68)
@@ -83,6 +85,7 @@ for ele in rev_list:
 #load images
 _image_library = {}
 def get_image(path):
+    path=ifile+path
     global _image_library
     image = _image_library.get(path)
     if image == None:
@@ -151,22 +154,22 @@ bacteria_bullet_group = pygame.sprite.Group()
 #ADD MUSIC
 music_lev=0.5
 sound_lev=0.5
-coin_fx=pygame.mixer.Sound('coin.wav')
+coin_fx=pygame.mixer.Sound(mfile+'coin.wav')
 coin_fx.set_volume(sound_lev)
-jump_fx=pygame.mixer.Sound('jump.wav')
+jump_fx=pygame.mixer.Sound(mfile+'jump.wav')
 jump_fx.set_volume(sound_lev)
-mixer.music.load('intro.wav')
+mixer.music.load(mfile+'intro.wav')
 mixer.music.play()
 mixer.music.set_volume(music_lev)
-click_fx=pygame.mixer.Sound('click.mp3')
+click_fx=pygame.mixer.Sound(mfile+'click.mp3')
 click_fx.set_volume(sound_lev)
-pickup_fx=pygame.mixer.Sound('pickup.wav')
+pickup_fx=pygame.mixer.Sound(mfile+'pickup.wav')
 pickup_fx.set_volume(sound_lev)
-shot_fx=pygame.mixer.Sound('shot.wav')
+shot_fx=pygame.mixer.Sound(mfile+'shot.wav')
 shot_fx.set_volume(sound_lev)
-shock_fx=pygame.mixer.Sound('shock.wav')
+shock_fx=pygame.mixer.Sound(mfile+'shock.wav')
 shock_fx.set_volume(sound_lev)
-victory_fx=pygame.mixer.Sound('victory.wav')
+victory_fx=pygame.mixer.Sound(mfile+'victory.wav')
 victory_fx.set_volume(sound_lev)
 def load_sound_lev():
     coin_fx.set_volume(sound_lev)
@@ -1080,7 +1083,7 @@ class coins(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y,attack_images,speed,health,damage):
         pygame.sprite.Sprite.__init__(self)
-        lst=[f for f in os.listdir(attack_images)]
+        lst=[f for f in os.listdir(ifile+attack_images)]
         lst.pop(0)
         lst.sort()
         self.r_imgs=[]
@@ -1309,7 +1312,7 @@ class tiles(pygame.sprite.Sprite):
 class shooter(pygame.sprite.Sprite):
     def __init__(self, x, y, shoot_rate,is_right,move_speed):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('shooter.png').convert()
+        self.image = get_image('shooter.png').convert()
         self.image=pygame.transform.scale(self.image,(tile_size,tile_size))
         self.rect = self.image.get_rect()
         self.move_direction=is_right
@@ -1508,7 +1511,7 @@ class App():
                     self.change=False
                     game_over=-1
                     page=3 
-                    lst = os.listdir(f"char{self.player_num+1}")
+                    lst = os.listdir(f"{ifile}char{self.player_num+1}")
                     lst.sort()
                     self.player = character(level_data[level-1]['x'],level_data[level-1]['y'] ,f"char{self.player_num+1}/",lst) 
                     pygame.mixer.music.play(-1)
@@ -1539,7 +1542,7 @@ class App():
                         self.click=True
                         if level_imgs[i][1].collidepoint((x,y)):
                             i+=1
-                            pygame.mixer.music.load(f"level{i}.wav")
+                            pygame.mixer.music.load(f"{mfile}level{i}.wav")
                             click_fx.play()
                             level=i
                             page=2 
@@ -1553,7 +1556,7 @@ class App():
         if page == 0 :
             if not mixer.music.get_busy():
                 pygame.mixer.music.stop()
-                pygame.mixer.music.load('main_theme.wav')
+                pygame.mixer.music.load(mfile+'main_theme.wav')
                 pygame.mixer.music.play(-1)
             screen.blit(bg,(0,0))
             play_btn.draw_btn()
